@@ -7,6 +7,9 @@ from training_module.hlt_client.download_game import download
 
 outpath = '/Users/Peace/Desktop/replays'
 
+if not os.path.exists(outpath):
+    outpath = '/home/staker/Projects/halite/replays'
+
 offset = 2 # To ensure the day is done (timezone differences)
 
 today = datetime.datetime.now() - datetime.timedelta(days=offset)
