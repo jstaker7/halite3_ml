@@ -76,7 +76,7 @@ class Game(object):
         return dropoffs
     
     
-    def load_replay(self, path: str):
+    def load_replay(self, path: str, meta_only=False):
         with open(path, 'rb') as infile:
             raw_replay = zstd.loads(infile.read()).decode()
         replay = json.loads(raw_replay)
@@ -88,6 +88,10 @@ class Game(object):
                      'number_of_players', 'players']
                      
         self.meta_data = {key: replay[key] for key in meta_keys}
+        
+        if meta_only:
+            return
+        
         self.events = [self.parse_events(f) for f in replay['full_frames']]
         self.factories = self.parse_factories()
         
@@ -194,8 +198,3 @@ class Game(object):
         deposited = [[x[y] if y in x else 0 for y in ['0', '1', '2', '3']] for x in deposited]
         return deposited
 
-def download_replays():
-    """
-    To be run on cron. Each night, download the recent replays for the top N
-    players.
-    """
