@@ -6,4 +6,6 @@ source activate cdeep3
 
 /home/staker/miniconda3/envs/cdeep3/bin/python3.6 /home/staker/Projects/halite/halite3_ml/training_module/scripts/download_replays.py >> /home/staker/logs/download_script.log
 
+/home/staker/miniconda3/envs/cdeep3/bin/python3.6 /home/staker/Projects/halite/halite3_ml/training_module/scripts/index_replays.py >> /home/staker/logs/download_script.log
+
 source deactivate
