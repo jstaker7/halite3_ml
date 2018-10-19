@@ -1,6 +1,7 @@
 import os
 import zstd
 import re
+import time
 
 import requests
 import multiprocessing
@@ -39,7 +40,23 @@ class GameDownloader:
         self.destination = destination
         self.objects = []
         for bucket in buckets:
-            self.objects += self._parse_objects(requests.get(bucket + _PREFIX_OPTION + prefix).json())
+            # Example:
+            # https://www.googleapis.com/storage/v1/b/ts2018-halite-3-gold-replays/o?prefix=replay-20181017-2358
+            for h in range(24):
+                for m in range(6):
+                    hour = '0'*(2-len(str(h))) + str(h)
+                    #minute = '0'*(2-len(str(m))) + str(m)
+                    minute = str(m) # 10-min increments
+                    time_prefix = '-'+hour+minute
+                    url = bucket + _PREFIX_OPTION + prefix + time_prefix
+                    #print(url)
+                    #fdgdg
+                    #try:
+                    #print(time_prefix)
+                    self.objects += self._parse_objects(requests.get(url).json())
+                    #print(len(self.objects))
+                #except:
+                #    continue
 
     @staticmethod
     def _parse_objects(bucket_json):
@@ -98,7 +115,7 @@ class GameDownloader:
         """
         game_id = self._parse_id_from_url(url)
         try:
-            print("downloading {}".format(url))
+            #print("downloading {}".format(url))
             with open(os.path.join(self.destination, game_id), 'wb') as outfile:
                 binary = requests.get(url + _MEDIA_DOWNLOAD_OPTION).content
                 outfile.write(binary)
