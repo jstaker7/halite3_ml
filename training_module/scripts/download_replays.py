@@ -29,7 +29,6 @@ try:
     download(_outpath, date, False)
 
     print(date)
-    print()
 
     #for replay_name in os.listdir(outpath):
     #    path = os.path.join(outpath, replay_name)

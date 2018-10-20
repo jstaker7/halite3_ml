@@ -1,3 +1,5 @@
+import pickle
+import gzip
 
 # Given history of frames
 # 1) Predict which player is which
@@ -21,3 +23,10 @@ receptive_field_size = 3
 # Potentially learn a reconstruction error to capture many states (of gold only)
 
 # Start with greedy (single convolution)
+
+# load the replay index
+with gzip.open('/Users/Peace/Desktop/replays/INDEX.pkl', 'rb') as infile:
+    master_index = pickle.load(infile)
+
+print(master_index.keys())
+

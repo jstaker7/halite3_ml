@@ -45,18 +45,11 @@ class GameDownloader:
             for h in range(24):
                 for m in range(6):
                     hour = '0'*(2-len(str(h))) + str(h)
-                    #minute = '0'*(2-len(str(m))) + str(m)
                     minute = str(m) # 10-min increments
                     time_prefix = '-'+hour+minute
                     url = bucket + _PREFIX_OPTION + prefix + time_prefix
-                    #print(url)
-                    #fdgdg
-                    #try:
-                    #print(time_prefix)
                     self.objects += self._parse_objects(requests.get(url).json())
-                    #print(len(self.objects))
-                #except:
-                #    continue
+        print("Num replays: {}".format(len(self.objects)))
 
     @staticmethod
     def _parse_objects(bucket_json):
