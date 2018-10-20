@@ -198,3 +198,160 @@ class Game(object):
         deposited = [[x[y] if y in x else 0 for y in ['0', '1', '2', '3']] for x in deposited]
         return deposited
 
+    def get_training_frames(self, pid=None, pname=None, v=None):
+        # pid OR name. Bot version is option (only when name given)
+        # if all None, take random player
+
+#        for p in self.meta_data['players']:
+#            if 'Rachol' == p['name'].split(' ')[0]:
+#                pid = p['player_id']
+
+
+        map_shape = self.production.shape[1], self.production.shape[2]
+        factories = np.zeros((*map_shape, 1), dtype=np.float32)
+        for fx, fy in self.factories:
+            factories[fy, fx] = -1 # Assume all are enemies
+
+        # Then set for the player of interest
+        fx, fy = self.factories[pid]
+        factories[fy, fx] = 1
+
+        # normalize some of the arrays
+        production = (self.production - 500.)/1000. # Guessing on norm values for now
+
+        entities = self.entities.copy()
+        has_ship = entities > 0
+        has_ship_mask = np.sum(has_ship.astype(np.float32), -1)
+        my_ships = has_ship[:, :, :, pid].copy()
+
+        entities = (np.sum(entities, -1) - 500.)/1000.
+
+
+        has_ship = -1 * np.sum(has_ship.astype(np.float32), axis=-1)
+        #print(entities.shape)
+        #print(my_ships.shape)
+        has_ship[my_ships] = 1
+        entities *= has_ship_mask
+        #print(has_ship[100, 20:40, 20:40])
+        #print(entities[100, 20:40, 20:40])
+        has_ship = np.expand_dims(has_ship, -1)
+        entities = np.expand_dims(entities, -1)
+
+        dropoffs = self.dropoffs
+        has_dropoff = np.zeros((production.shape[0], *map_shape, 1), dtype=np.float32)
+        assert len(dropoffs) == len(production)
+        for ix, ds in enumerate(dropoffs):
+            for d in ds:
+                x, y, oid = d
+                v = 1. if oid == pid else -1.
+                has_dropoff[ix, y, x] = v
+
+        # factories need to be duplicated accross frames
+        factories = np.repeat(np.expand_dims(factories, 0), production.shape[0], 0)
+
+        production = np.expand_dims(production, -1)
+
+        frames = np.concatenate([production, has_ship, entities, factories, has_dropoff], axis=-1)
+
+        # Note: 'no-moves' do not need explicit assignment since 0 means 'still'
+        # and the arrays are initialled with zero.
+
+        return frames, self.moves[:, :, pid]
+
+    def center_frames(self, frames):
+        my_factory = frames[0, :, :, 3] > 0
+        pos = np.squeeze(np.where(my_factory>0))
+        expected_pos = np.squeeze(my_factory.shape)//2 # Assuming always square
+        shift = expected_pos - pos
+        frames = np.roll(frames, shift[0], axis=1)
+        frames = np.roll(frames, shift[1], axis=2)
+        return frames
+
+    def pad_replay(replay, dims):
+        old_shape = replay.shape
+        
+        old_pad1y = 0
+        old_pad2y = 0
+        
+        old_pad1x = 0
+        old_pad2x = 0
+        
+        pad_amounty = dims - replay.shape[1]
+        side1_pady = pad_amounty//2
+        side2_pady = pad_amounty - side1_pady
+
+        old_pad1y += min(old_shape[1], side1_pady)
+        old_pad2y += min(old_shape[1], side2_pady)
+        
+        pad_amountx = dims - replay.shape[2]
+        side1_padx = pad_amountx//2
+        side2_padx = pad_amountx - side1_padx
+
+        old_pad1x += min(old_shape[2], side1_padx)
+        old_pad2x += min(old_shape[2], side2_padx)
+
+
+        # Padding by reflection
+        frame = np.concatenate([replay[:, -old_pad1y:, :, :], replay], axis=1)
+        frame = np.concatenate([frame, replay[:, :old_pad2y, :, :]], axis=1)
+        replay = frame.copy()
+        frame = np.concatenate([replay[:, :, -old_pad1x:, :], frame], axis=2)
+        frame = np.concatenate([frame, replay[:, :, :old_pad2x, :]], axis=2)
+        
+
+
+        pad_amounty = dims - frame.shape[1]
+        side1_pady = pad_amounty//2
+        side2_pady = pad_amounty - side1_pady
+        old_pad1y += side1_pady
+        old_pad2y += side2_pady
+        
+        pad_amountx = dims - frame.shape[2]
+        side1_padx = pad_amountx//2
+        side2_padx = pad_amountx - side1_padx
+        old_pad1x += side1_padx
+        old_pad2x += side2_padx
+
+        frame = np.pad(frame, ((0,0), (side1_pady, side2_pady),
+                                    (side1_padx, side2_padx), (0,0)),
+                                    mode='constant', constant_values=0)
+
+        return frame, ((old_pad1y, old_pad2y), (old_pad1x, old_pad2x))
+
+    def aug(move, frame, iter, frames_padding):
+        """
+        Augment the data using rotations and mirroring.
+        """
+        should_mirror = iter>3
+        
+        frames_padding = np.array([[frames_padding[0][0], frames_padding[0][1]],
+                                    [frames_padding[1][0], frames_padding[1][1]]])
+        
+
+        num_rotate = iter%4
+        
+        if should_mirror:
+            frame = np.flip(frame, 0)
+            move = np.flip(move, 0)
+        
+            frames_padding = np.array([[frames_padding[0][1], frames_padding[0][0]],
+                                        [frames_padding[1][0], frames_padding[1][1]]])
+        
+        frame = np.rot90(frame, num_rotate)
+        move = np.rot90(move, num_rotate)
+        
+        for _ in range(num_rotate):
+            frames_padding = np.array([[frames_padding[1][1], frames_padding[1][0]],
+                                       [frames_padding[0][0], frames_padding[0][1]]])
+        
+        # We need to change the move values to match the augmentation
+        # STILL will not change; this is simply reordering the axis
+        # Current axis: N:1, E:2, S:3, W:4
+        if should_mirror:
+            move = move[:, :, (0, 3, 2, 1, 4)]
+
+        shift = np.roll(move[:, :, 1:].copy(), -1*num_rotate, 2)
+        move[:, :, 1:] = shift
+
+        return move, frame, frames_padding
+
