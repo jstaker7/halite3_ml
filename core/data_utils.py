@@ -202,11 +202,14 @@ class Game(object):
         # pid OR name. Bot version is option (only when name given)
         # if all None, take random player
 
-#        for p in self.meta_data['players']:
-#            if 'Rachol' == p['name'].split(' ')[0]:
-#                pid = p['player_id']
-
-
+        if pid is None and pname is not None:
+            for p in self.meta_data['players']:
+                if pname == p['name'].split(' ')[0]:
+                    pid = p['player_id']
+                    break
+                    
+        assert pid is not None, "Error: player not found in replay"
+        
         map_shape = self.production.shape[1], self.production.shape[2]
         factories = np.zeros((*map_shape, 1), dtype=np.float32)
         for fx, fy in self.factories:
@@ -255,68 +258,35 @@ class Game(object):
 
         # Note: 'no-moves' do not need explicit assignment since 0 means 'still'
         # and the arrays are initialled with zero.
+        
+        moves = self.moves[:, :, :, pid]
 
-        return frames, self.moves[:, :, pid]
+        frames, moves = self.center_frames(frames, moves)
 
-    def center_frames(self, frames):
+        frames = self.pad_replay(frames)
+
+        return frames, moves
+
+    def center_frames(self, frames, moves=None):
         my_factory = frames[0, :, :, 3] > 0
         pos = np.squeeze(np.where(my_factory>0))
         expected_pos = np.squeeze(my_factory.shape)//2 # Assuming always square
         shift = expected_pos - pos
         frames = np.roll(frames, shift[0], axis=1)
         frames = np.roll(frames, shift[1], axis=2)
+        
+        if moves is not None:
+            moves = np.roll(moves, shift[0], axis=1)
+            moves = np.roll(moves, shift[1], axis=2)
+            return frames, moves
+        
         return frames
 
-    def pad_replay(replay, dims):
-        old_shape = replay.shape
-        
-        old_pad1y = 0
-        old_pad2y = 0
-        
-        old_pad1x = 0
-        old_pad2x = 0
-        
-        pad_amounty = dims - replay.shape[1]
-        side1_pady = pad_amounty//2
-        side2_pady = pad_amounty - side1_pady
-
-        old_pad1y += min(old_shape[1], side1_pady)
-        old_pad2y += min(old_shape[1], side2_pady)
-        
-        pad_amountx = dims - replay.shape[2]
-        side1_padx = pad_amountx//2
-        side2_padx = pad_amountx - side1_padx
-
-        old_pad1x += min(old_shape[2], side1_padx)
-        old_pad2x += min(old_shape[2], side2_padx)
-
-
-        # Padding by reflection
-        frame = np.concatenate([replay[:, -old_pad1y:, :, :], replay], axis=1)
-        frame = np.concatenate([frame, replay[:, :old_pad2y, :, :]], axis=1)
-        replay = frame.copy()
-        frame = np.concatenate([replay[:, :, -old_pad1x:, :], frame], axis=2)
-        frame = np.concatenate([frame, replay[:, :, :old_pad2x, :]], axis=2)
-        
-
-
-        pad_amounty = dims - frame.shape[1]
-        side1_pady = pad_amounty//2
-        side2_pady = pad_amounty - side1_pady
-        old_pad1y += side1_pady
-        old_pad2y += side2_pady
-        
-        pad_amountx = dims - frame.shape[2]
-        side1_padx = pad_amountx//2
-        side2_padx = pad_amountx - side1_padx
-        old_pad1x += side1_padx
-        old_pad2x += side2_padx
-
-        frame = np.pad(frame, ((0,0), (side1_pady, side2_pady),
-                                    (side1_padx, side2_padx), (0,0)),
-                                    mode='constant', constant_values=0)
-
-        return frame, ((old_pad1y, old_pad2y), (old_pad1x, old_pad2x))
+    def pad_replay(self, frames):
+        # Let's do full padding (by reflection)
+        frames = np.concatenate([frames, frames, frames], axis=1)
+        frames = np.concatenate([frames, frames, frames], axis=2)
+        return frames
 
     def aug(move, frame, iter, frames_padding):
         """
