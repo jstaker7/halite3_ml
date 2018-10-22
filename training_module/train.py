@@ -97,7 +97,7 @@ def worker(queue, size):
         for pair in zip(frames, moves, generate, can_afford, turns_left):
             buffer.append(pair)
     
-        if len(buffer) > 5000:
+        if len(buffer) > 1000:
             shuffle(buffer)
             while len(buffer) > 0:
                 queue.put(buffer.pop())
