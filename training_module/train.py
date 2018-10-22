@@ -86,15 +86,18 @@ def worker(queue, size):
         except:
             continue
         
-        frames, moves = game.get_training_frames(pname='Rachol')
+        frames, moves, generate, can_afford, turns_left = game.get_training_frames(pname='Rachol')
         
-        frames = frames[:25]
-        moves = moves[:25]
-  
-        for pair in zip(frames, moves):
+#        frames = frames[:25]
+#        moves = moves[:25]
+#        generate = generate[:25]
+#        can_afford = can_afford[:25]
+#        turns_left = turns_left[:25]
+
+        for pair in zip(frames, moves, generate, can_afford, turns_left):
             buffer.append(pair)
     
-        if len(buffer) > 2:
+        if len(buffer) > 5000:
             shuffle(buffer)
             while len(buffer) > 0:
                 queue.put(buffer.pop())
@@ -114,17 +117,21 @@ processes = [Thread(target=worker, args=(queues[ix], queue_m_sizes[ix])) for ix 
 for step in range(200):
     which_queue = np.random.randint(5)
     queue = queues[which_queue]
-    frames_batch, moves_batch = [], []
+    f_batch, m_batch, g_batch, c_batch, t_batch = [], [], [], [], []
     print(step)
     for i in range(batch_size):
-        frame, move = queue.get()
-        #print(frame.shape)
-        #print(move.shape)
-        frames_batch.append(frame)
-        moves_batch.append(move)
-    frames_batch = np.stack(frames_batch)
-    moves_batch = np.stack(moves_batch)
-    #print(frames_batch.shape, moves_batch.shape)
+        frame, move, generate, can_afford, turns_left = queue.get()
+        f_batch.append(frame)
+        m_batch.append(move)
+        g_batch.append(generate)
+        c_batch.append(can_afford)
+        t_batch.append(turns_left)
+    f_batch = np.stack(f_batch)
+    m_batch = np.stack(m_batch)
+    g_batch = np.stack(g_batch)
+    c_batch = np.stack(c_batch)
+    t_batch = np.stack(t_batch)
+    print([x.shape for x in [f_batch, m_batch, g_batch, c_batch, t_batch]])
     #val = queue.get()
     #print(val)
 

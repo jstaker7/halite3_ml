@@ -196,7 +196,7 @@ class Game(object):
     def load_deposited(self, replay):
         deposited = [x['deposited'] for x in replay['full_frames']]
         deposited = [[x[y] if y in x else 0 for y in ['0', '1', '2', '3']] for x in deposited]
-        return deposited
+        return np.array(deposited)
 
     def get_training_frames(self, pid=None, pname=None, v=None):
         # pid OR name. Bot version is option (only when name given)
@@ -264,8 +264,22 @@ class Game(object):
         frames, moves = self.center_frames(frames, moves)
 
         frames = self.pad_replay(frames)
+        
+        generate = self.generate[:, pid]
+        energy = self.energy[:-1, pid] # -1 because I don't need final state here
+        
+        can_afford_both = energy > 4999.
+        can_afford_drop = energy > 3999.
+        can_afford_ship = energy > 999.
+        
+        can_afford = np.stack([can_afford_ship, can_afford_drop, can_afford_both], -1)
+        
+        turns_left = np.array(list(range(can_afford.shape[0]-1, -1, -1)))
+        turns_left = turns_left/200. - 1.
+        
+        # Should also add diff between my score and others
 
-        return frames, moves
+        return frames, moves, generate, can_afford, turns_left
 
     def center_frames(self, frames, moves=None):
         my_factory = frames[0, :, :, 3] > 0
