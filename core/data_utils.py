@@ -302,13 +302,15 @@ class Game(object):
         frames = np.concatenate([frames, frames, frames], axis=2)
         
         # Ensure all get padded to the same max dim
-        if frames.shape[1] != 192:
-            pad_y1 = (192 - frames.shape[1])//2
-            pad_y2 = (192 - frames.shape[1]) - pad_y1
+        #max_dim = 192
+        max_dim = 256 # For easier u-net implementation
+        if frames.shape[1] != max_dim:
+            pad_y1 = (max_dim - frames.shape[1])//2
+            pad_y2 = (max_dim - frames.shape[1]) - pad_y1
             frames = np.concatenate([frames[:, -pad_y1:], frames, frames[:, :pad_y2]], axis=1)
             
-            pad_x1 = (192 - frames.shape[2])//2
-            pad_x2 = (192 - frames.shape[2]) - pad_x1
+            pad_x1 = (max_dim - frames.shape[2])//2
+            pad_x2 = (max_dim - frames.shape[2]) - pad_x1
             frames = np.concatenate([frames[:, :, -pad_x1:], frames, frames[:, :, :pad_x2]], axis=2)
         
         return frames
