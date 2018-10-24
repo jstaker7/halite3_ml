@@ -263,7 +263,7 @@ class Game(object):
 
         frames, moves = self.center_frames(frames, moves)
 
-        frames = self.pad_replay(frames)
+        frames, my_ships, moves = self.pad_replay(frames, moves)
         
         generate = self.generate[:, pid]
         energy = self.energy[:-1, pid] # -1 because I don't need final state here
@@ -279,7 +279,7 @@ class Game(object):
         
         # Should also add diff between my score and others
 
-        return frames, moves, generate, can_afford, turns_left
+        return frames, moves, generate, can_afford, turns_left, my_ships
 
     def center_frames(self, frames, moves=None):
         my_factory = frames[0, :, :, 3] > 0
@@ -296,10 +296,23 @@ class Game(object):
         
         return frames
 
-    def pad_replay(self, frames):
+    def pad_replay(self, frames, moves=None):
+    
+        my_ships = (frames[:, :, :, 1] > 0.5).astype(np.float32)
+        zeros = np.zeros(my_ships.shape, dtype=np.float32)
+    
         # Let's do full padding (by reflection)
         frames = np.concatenate([frames, frames, frames], axis=1)
         frames = np.concatenate([frames, frames, frames], axis=2)
+        
+        if moves is not None:
+            moves = np.concatenate([moves, moves, moves], axis=1)
+            moves = np.concatenate([moves, moves, moves], axis=2)
+        
+        my_ships = np.concatenate([zeros, my_ships, zeros], axis=1)
+        zeros = np.concatenate([zeros, zeros, zeros], axis=1)
+        my_ships = np.concatenate([zeros, my_ships, zeros], axis=2)
+        zeros = np.concatenate([zeros, zeros, zeros], axis=2)
         
         # Ensure all get padded to the same max dim
         #max_dim = 192
@@ -308,12 +321,24 @@ class Game(object):
             pad_y1 = (max_dim - frames.shape[1])//2
             pad_y2 = (max_dim - frames.shape[1]) - pad_y1
             frames = np.concatenate([frames[:, -pad_y1:], frames, frames[:, :pad_y2]], axis=1)
+            my_ships = np.concatenate([zeros[:, -pad_y1:], my_ships, zeros[:, :pad_y2]], axis=1)
+            zeros = np.concatenate([zeros[:, -pad_y1:], zeros, zeros[:, :pad_y2]], axis=1)
+            
+            if moves is not None:
+                moves = np.concatenate([moves[:, -pad_y1:], moves, moves[:, :pad_y2]], axis=1)
             
             pad_x1 = (max_dim - frames.shape[2])//2
             pad_x2 = (max_dim - frames.shape[2]) - pad_x1
             frames = np.concatenate([frames[:, :, -pad_x1:], frames, frames[:, :, :pad_x2]], axis=2)
+            my_ships = np.concatenate([zeros[:, :, -pad_x1:], my_ships, zeros[:, :, :pad_x2]], axis=2)
         
-        return frames
+            if moves is not None:
+                moves = np.concatenate([moves[:, :, -pad_x1:], moves, moves[:, :, :pad_x2]], axis=2)
+
+        if moves is not None:
+            return frames, my_ships, moves
+        
+        return frames, my_ships
     
     def reverse_padding(self, true_size):
         pass
