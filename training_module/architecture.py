@@ -23,8 +23,8 @@ def build_model():
 
     moves = tf.one_hot(moves, 6)
 
-    ca = tf.layers.dense(can_afford, size)
-    tl = tf.layers.dense(turns_left, size)
+    ca = tf.layers.dense(can_afford, 16)
+    tl = tf.layers.dense(turns_left, 16)
 
     ca = tf.expand_dims(ca, 1)
     ca = tf.expand_dims(ca, 1)

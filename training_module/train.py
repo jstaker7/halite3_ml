@@ -76,7 +76,7 @@ def worker(queue, size):
     # Note: Replay naming is not consistent (game id was added later)
     s_keep = [x for x in keep if int(x.split('-')[-2]) == size]
     print("{0} maps with size {1}x{1}".format(len(s_keep), size))
-    buffer = []
+    #buffer = []
     while True:
         which_game = np.random.choice(s_keep)
         path = '/Users/Peace/Desktop/replays/{}/{}'
@@ -98,12 +98,13 @@ def worker(queue, size):
 #        turns_left = turns_left[:25]
 
         for pair in zip(frames, moves, generate, can_afford, turns_left, my_ships):
-            buffer.append(pair)
+            #buffer.append(pair)
+            queue.put(pair)
     
-        if len(buffer) > 10:
-            shuffle(buffer)
-            while len(buffer) > 0:
-                queue.put(buffer.pop())
+#        if len(buffer) > 10:
+#            shuffle(buffer)
+#            while len(buffer) > 0:
+#                queue.put(buffer.pop())
         #queue.put(size)
 
 
@@ -132,20 +133,41 @@ saver = tf.train.Saver()
 
 with tf.Session() as sess:
     tf.initializers.global_variables().run()
-
-    for step in range(200):
+    
+    # Training buffer to decorrelate examples seen in batches
+    buffer = []
+    
+    print("Filling buffer...")
+    for _ in range(3000):
         which_queue = np.random.randint(5)
         queue = queues[which_queue]
-        f_batch, m_batch, g_batch, c_batch, t_batch, s_batch = [], [], [], [], [], []
+        pair = queue.get()
+        buffer.append(pair)
+    
+    assert len(buffer) > batch_size
+
+    for step in range(200):
         print(step)
+        f_batch, m_batch, g_batch, c_batch, t_batch, s_batch = [], [], [], [], [], []
+        
+        shuffle(buffer)
+    
         for i in range(batch_size):
-            frame, move, generate, can_afford, turns_left, my_ships = queue.get()
+            frame, move, generate, can_afford, turns_left, my_ships = buffer.pop()
             f_batch.append(frame)
             m_batch.append(move)
             g_batch.append(generate)
             c_batch.append(can_afford)
             t_batch.append(turns_left)
             s_batch.append(my_ships)
+
+        # Replenish buffer
+        for i in range(batch_size):
+            which_queue = np.random.randint(5)
+            queue = queues[which_queue]
+            pair = queue.get()
+            buffer.append(pair)
+        
         f_batch = np.stack(f_batch)
         m_batch = np.stack(m_batch)
         g_batch = np.stack(g_batch)
