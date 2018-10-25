@@ -112,7 +112,7 @@ def worker(queue, size):
 queues = [Queue(32) for _ in range(5)]
 queue_m_sizes = [32, 40, 48, 56, 64]
 
-batch_size = 2
+batch_size = 32
 
 #processes = [Process(target=worker, args=(queues[ix], queue_m_sizes[ix])) for ix in range(5)]
 processes = [Thread(target=worker, args=(queues[ix], queue_m_sizes[ix])) for ix in range(5)]
@@ -138,7 +138,7 @@ with tf.Session() as sess:
     buffer = []
     
     print("Filling buffer...")
-    for _ in range(3000):
+    for _ in range(8000):
         which_queue = np.random.randint(5)
         queue = queues[which_queue]
         pair = queue.get()
@@ -146,8 +146,9 @@ with tf.Session() as sess:
     
     assert len(buffer) > batch_size
 
-    for step in range(200):
-        print(step)
+    print("Training...")
+    for step in range(2000000):
+
         f_batch, m_batch, g_batch, c_batch, t_batch, s_batch = [], [], [], [], [], []
         
         shuffle(buffer)
@@ -180,7 +181,7 @@ with tf.Session() as sess:
         m_batch = np.expand_dims(m_batch, -1)
         s_batch = np.expand_dims(s_batch, -1)
         
-        print([x.shape for x in [f_batch, m_batch, g_batch, c_batch, t_batch, s_batch]])
+        #print([x.shape for x in [f_batch, m_batch, g_batch, c_batch, t_batch, s_batch]])
         
         feed_dict = {frames_node: f_batch,
                      can_afford_node: c_batch,
@@ -189,10 +190,17 @@ with tf.Session() as sess:
                      moves_node: m_batch,
                      generate_node: g_batch,
                     }
-        
-        for i in range(100000):
-            loss, _ = sess.run([loss_node, optimizer_node], feed_dict=feed_dict)
+
+        loss, _ = sess.run([loss_node, optimizer_node], feed_dict=feed_dict)
+
+        if step % 100 == 0:
+            print(step)
             print(loss)
+            saver.save(sess, '/home/staker/Projects/halite/models/model.ckpt')
+        
+#        for i in range(100000):
+#            loss, _ = sess.run([loss_node, optimizer_node], feed_dict=feed_dict)
+#            print(loss)
 
         #val = queue.get()
         #print(val)
