@@ -43,7 +43,12 @@ from training_module.architecture import build_model
 #
 #print(master_index.keys())
 
-with gzip.open('/Users/Peace/Desktop/replays/INDEX.pkl', 'rb') as infile:
+replay_root = '/Users/Peace/Desktop/replays'
+
+if not os.path.exists(replay_root):
+    replay_root = '/home/staker/Projects/halite/replays'
+
+with gzip.open(os.path.join(replay_root, 'INDEX.pkl'), 'rb') as infile:
     master_index = pickle.load(infile)
 
 keep = []
@@ -79,7 +84,7 @@ def worker(queue, size):
     #buffer = []
     while True:
         which_game = np.random.choice(s_keep)
-        path = '/Users/Peace/Desktop/replays/{}/{}'
+        path = os.path.join(replay_root, '{}', '{}')
         day = which_game.replace('ts2018-halite-3-gold-replays_replay-', '').split('-')[0]
         path = path.format(day, which_game)
 
