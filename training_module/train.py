@@ -143,7 +143,7 @@ with tf.Session() as sess:
     buffer = []
     
     print("Filling buffer...")
-    for _ in range(6000):
+    for _ in range(3000):
         which_queue = np.random.randint(5)
         queue = queues[which_queue]
         pair = queue.get()

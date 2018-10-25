@@ -336,7 +336,7 @@ class Game(object):
                 moves = np.concatenate([moves[:, :, -pad_x1:], moves, moves[:, :, :pad_x2]], axis=2)
 
         if moves is not None:
-            return frames, my_ships, moves
+            return frames, my_ships.astype('uint8'), moves.astype('uint8')
         
         return frames, my_ships
     

@@ -9,7 +9,9 @@ def build_model():
     frames = tf.placeholder(tf.float32, [None, 256, 256, 5])
     can_afford = tf.placeholder(tf.float32, [None, 3])
     turns_left = tf.placeholder(tf.float32, [None, 1])
-    my_ships = tf.placeholder(tf.float32, [None, 256, 256, 1])
+    my_ships = tf.placeholder(tf.uint8, [None, 256, 256, 1])
+    
+    my_ships = tf.cast(my_ships, tf.float32)
 
     moves = tf.placeholder(tf.uint8, [None, 256, 256, 1])
     generate = tf.placeholder(tf.float32, [None, 1])
