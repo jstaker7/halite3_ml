@@ -3,7 +3,7 @@ import gzip
 import time
 from random import shuffle
 #from multiprocessing import Process, Queue
-
+import os
 from threading import Thread
 from queue import Queue
 
@@ -143,7 +143,7 @@ with tf.Session() as sess:
     buffer = []
     
     print("Filling buffer...")
-    for _ in range(8000):
+    for _ in range(6000):
         which_queue = np.random.randint(5)
         queue = queues[which_queue]
         pair = queue.get()

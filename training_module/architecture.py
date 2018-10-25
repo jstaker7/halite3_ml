@@ -104,9 +104,9 @@ def build_model():
 
     frame_loss = tf.reduce_sum(masked_loss, axis=[1, 2])
 
-    average_frame_loss = frame_loss / ships_per_frame
+    average_frame_loss = frame_loss / (ships_per_frame + 0.00000001) # First frames have no ship
 
-    loss = tf.reduce_sum(average_frame_loss)
+    loss = tf.reduce_mean(average_frame_loss)
 
     optimizer = tf.train.AdamOptimizer(learning_rate).minimize(loss)
 
