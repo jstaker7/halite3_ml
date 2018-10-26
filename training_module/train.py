@@ -6,6 +6,7 @@ from random import shuffle
 import os
 from threading import Thread
 from queue import Queue, PriorityQueue
+import copy
 
 import numpy as np
 import tensorflow as tf
@@ -83,7 +84,7 @@ for rp in master_index:
 
 min_buffer_size = 5000
 max_buffer_size = 8000
-batch_size = 32
+batch_size = 64
 
 
 def batch_prep(buffer, batch_queue):
@@ -169,6 +170,14 @@ def worker(queue, size):
             continue
         
         frames, moves, generate, can_afford, turns_left = game.get_training_frames(pname='Rachol')
+        
+        # Avoid GC issues
+        frames = copy.deepcopy(frames)
+        moves = copy.deepcopy(moves)
+        generate = copy.deepcopy(generate)
+        can_afford = copy.deepcopy(can_afford)
+        turns_left = copy.deepcopy(turns_left)
+        del game
         
 #        frames = frames[:25]
 #        moves = moves[:25]
@@ -285,7 +294,7 @@ try:
 
             loss, _ = sess.run([loss_node, optimizer_node], feed_dict=feed_dict)
 
-            if step % 100 == 0:
+            if step % 1000 == 0:
                 print(step)
                 print(loss)
                 saver.save(sess, os.path.join(save_dir, 'model.ckpt'))
