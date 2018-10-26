@@ -263,7 +263,7 @@ class Game(object):
 
         frames, moves = self.center_frames(frames, moves)
 
-        frames, my_ships, moves = self.pad_replay(frames, moves)
+        #frames, my_ships, moves = self.pad_replay(frames, moves)
         
         generate = self.generate[:, pid]
         energy = self.energy[:-1, pid] # -1 because I don't need final state here
@@ -279,7 +279,7 @@ class Game(object):
         
         # Should also add diff between my score and others
 
-        return frames, moves, generate, can_afford, turns_left, my_ships
+        return frames, moves, generate, can_afford, turns_left #, my_ships
 
     def center_frames(self, frames, moves=None):
         my_factory = frames[0, :, :, 3] > 0

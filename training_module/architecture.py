@@ -91,6 +91,10 @@ def build_model():
     u_l1_a = tf.layers.conv2d_transpose(u_l2_s, 64, 3, 2, activation=tf.nn.relu, padding='same') # 256
     u_l1_c = tf.concat([u_l1_a, d_l1_a], -1)
     u_l1_s = tf.layers.conv2d(u_l1_c, 63, 3, activation=tf.nn.relu, padding='same')
+    
+    generate_logits = tf.layers.dense(latent, 1, activation=None)
+    
+    generate_logits = tf.squeeze(generate_logits, [1, 2])
 
     moves_logits = tf.layers.conv2d(u_l1_s, 6, 3, activation=None, padding='same')
 
@@ -107,8 +111,13 @@ def build_model():
     frame_loss = tf.reduce_sum(masked_loss, axis=[1, 2])
 
     average_frame_loss = frame_loss / (ships_per_frame + 0.00000001) # First frames have no ship
+    
 
-    loss = tf.reduce_mean(average_frame_loss)
+    generate_losses = tf.nn.sigmoid_cross_entropy_with_logits(labels=generate, logits=generate_logits)
+    
+    generate_losses = tf.reduce_mean(generate_losses) # TODO: do I need to add to frames before averaging?
+
+    loss = tf.reduce_mean(average_frame_loss) + 0.01*generate_losses
 
     optimizer = tf.train.AdamOptimizer(learning_rate).minimize(loss)
 
