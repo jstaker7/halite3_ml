@@ -15,6 +15,8 @@ logging.basicConfig(filename='./test.log',
 #logger.setLevel(30)
 logging.info('test')
 
+import numpy as np
+
 # Turning off logging doesn't seem to be working
 #os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 import tensorflow as tf
@@ -28,6 +30,21 @@ cd = os.path.dirname(os.path.realpath(__file__))
 sys.path.append(cd)
 from data_utils import Game
 
+#def read_input():
+#    """
+#    Reads input from stdin, shutting down logging and exiting if an EOFError occurs
+#    :return: input read
+#    """
+#    try:
+#        return input()
+#    except EOFError as eof:
+#        logging.shutdown()
+#        raise SystemExit(eof)
+#
+## Rename for ease of use
+#input = read_input
+
+
 #for i in range(5):
 #    raw_input = input()
 #    logging.info(raw_input)
@@ -35,8 +52,9 @@ from data_utils import Game
 #ghvhgv
 
 def update_frame(frame):
+
     turn_number = input()
-    logging.info(turn_number)
+    #logging.info(turn_number)
     
     num_players = 2
     
@@ -47,12 +65,14 @@ def update_frame(frame):
         logging.info(num_dropoffs)
         logging.info(halite)
     
-        ships = {id: id, x, y, h for (id, x, y, h) in [map(int, read_input().split()) for _ in range(num_ships)]}
-        dropoffs = {id: id, x, y for (id, x, y) in [map(int, read_input().split()) for _ in range(num_dropoffs)]}
+        ships = {id: (id, x, y, h) for (id, x, y, h) in [map(int, input().split()) for _ in range(num_ships)]}
+        dropoffs = {id: (id, x, y) for (id, x, y) in [map(int, input().split()) for _ in range(num_dropoffs)]}
+        
+    for _ in range(int(input())):
+        x, y, h = map(int, input().split())
+        frame[y, x, 0] = h
 
-    for _ in range(int(read_input())):
-        cell_x, cell_y, cell_energy = map(int, read_input().split())
-        self[Position(cell_x, cell_y)].halite_amount = cell_energy
+    return frame
 
 def initialize_frame():
     raw_constants = input()
@@ -69,24 +89,24 @@ def initialize_frame():
     num_players = 2
     
     for player in range(num_players):
-        player, shipyard_x, shipyard_y = map(int, read_input().split())
+        player, shipyard_x, shipyard_y = map(int, input().split())
         #logging.info(player)
         #logging.info(shipyard_x)
         #logging.info(shipyard_y)
     
-    map_width, map_height = map(int, read_input().split())
+    map_width, map_height = map(int, input().split())
     #game_map = [[None for _ in range(map_width)] for _ in range(map_height)]
     game_map = []
     for _ in range(map_height):
-        row = read_input().strip()
+        row = [int(x) for x in input().split()]
         game_map.append(row)
 
     frame = np.array(game_map)
-    logging.info(frame)
+    #logging.info(frame)
 
     # Not all info has been provided yet. We need to call an update to fill in
     # the missing info.
-    frame = update_frame(frame)
+
     return frame
 
 # Load the model
@@ -105,9 +125,8 @@ with tf.Session() as sess:
     frame = initialize_frame()
 
     # Send name
-    sys.stdout.flush("jstaker7")
-    
-    #print('READY')
+    print("jstaker7", flush=True)
+    #sys.stdout.flush()
 
 #    while True:
 #        raw_input = input()
@@ -115,13 +134,13 @@ with tf.Session() as sess:
 #        time.sleep(1)
 
     while True:
-        
+        frame = update_frame(frame)
         # You extract player metadata and the updated map metadata here for convenience.
-        me = game.me
-        logging.info(me)
-        game_map = game.game_map
-        logging.info(game_map)
-        sfsdfdfs
+        #me = game.me
+        #logging.info(me)
+        #game_map = game.game_map
+        #logging.info(game_map)
+        #sfsdfdfs
         # A command queue holds all the commands you will run this turn. You build this list up and submit it at the
         #   end of the turn.
         command_queue = []
@@ -144,5 +163,4 @@ with tf.Session() as sess:
         # Send your moves back to the game environment, ending this turn.
         game.end_turn(command_queue)
 
-        update_frame()
 
