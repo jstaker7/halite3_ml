@@ -97,6 +97,9 @@ def build_model():
     generate_logits = tf.squeeze(generate_logits, [1, 2])
 
     moves_logits = tf.layers.conv2d(u_l1_s, 6, 3, activation=None, padding='same')
+    
+    tf.add_to_collection('m_logits', moves_logits)
+    tf.add_to_collection('g_logits', generate_logits)
 
     losses = tf.nn.softmax_cross_entropy_with_logits_v2(labels=moves,
                                                 logits=moves_logits,
