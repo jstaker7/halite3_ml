@@ -122,7 +122,15 @@ def batch_prep(buffer, batch_queue):
 
         if len(frames) == batch_size:
             pair = np.array(frames), np.array(moves), np.array(generates), np.array(can_affords), np.array(turns_lefts), np.array(my_ships)
-            batch_queue.put(pair)
+            batch_queue.put(copy.deepcopy(pair))
+            
+            del pair
+            del frames
+            del moves
+            del generates
+            del can_affords
+            del turns_lefts
+            del my_ships
             
             # Reset
             frames = []
@@ -187,7 +195,13 @@ def worker(queue, size):
 
         for pair in zip(frames, moves, generate, can_afford, turns_left):
             #buffer.append(pair)
-            queue.put(pair)
+            queue.put(copy.deepcopy(pair))
+
+        del frames
+        del moves
+        del generate
+        del can_afford
+        del turns_left
     
 #        if len(buffer) > 10:
 #            shuffle(buffer)
