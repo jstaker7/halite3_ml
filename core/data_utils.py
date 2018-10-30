@@ -220,25 +220,26 @@ class Game(object):
         factories[fy, fx] = 1
 
         # normalize some of the arrays
-        production = (self.production - 500.)/1000. # Guessing on norm values for now
-
+        production = (self.production - 500.)/500. # Guessing on norm values for now
+        
         entities = self.entities.copy()
-        has_ship = entities > 0
-        has_ship_mask = np.sum(has_ship.astype(np.float32), -1)
-        my_ships = has_ship[:, :, :, pid].copy()
+        
+        my_ships = entities[:, :, :, 2+pid].copy()
 
-        entities = (np.sum(entities, -1) - 500.)/1000.
+        has_ship = np.sum(entities[:, :, :, 2:].copy().astype(np.float32), -1)
+        
+        has_ship_mask = has_ship.copy()
+        
+        # Convert enemy ships
+        has_ship = -1 * has_ship
+        has_ship[my_ships>0.5] = 1
+        
+        # Normalize
+        entity_energies = (entities[:, :, :, 0].copy().astype(np.float32) - 500.)/500.
+        entity_energies *= has_ship_mask
 
-
-        has_ship = -1 * np.sum(has_ship.astype(np.float32), axis=-1)
-        #print(entities.shape)
-        #print(my_ships.shape)
-        has_ship[my_ships] = 1
-        entities *= has_ship_mask
-        #print(has_ship[100, 20:40, 20:40])
-        #print(entities[100, 20:40, 20:40])
         has_ship = np.expand_dims(has_ship, -1)
-        entities = np.expand_dims(entities, -1)
+        entity_energies = np.expand_dims(entity_energies, -1)
 
         dropoffs = self.dropoffs
         has_dropoff = np.zeros((production.shape[0], *map_shape, 1), dtype=np.float32)
@@ -249,12 +250,12 @@ class Game(object):
                 v = 1. if oid == pid else -1.
                 has_dropoff[ix, y, x] = v
 
-        # factories need to be duplicated accross frames
+        # factories need to be duplicated across frames
         factories = np.repeat(np.expand_dims(factories, 0), production.shape[0], 0)
 
         production = np.expand_dims(production, -1)
 
-        frames = np.concatenate([production, has_ship, entities, factories, has_dropoff], axis=-1)
+        frames = np.concatenate([production, has_ship, entity_energies, factories, has_dropoff], axis=-1)
 
         # Note: 'no-moves' do not need explicit assignment since 0 means 'still'
         # and the arrays are initialled with zero.
