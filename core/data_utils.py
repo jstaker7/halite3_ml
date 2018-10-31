@@ -282,7 +282,7 @@ class Game(object):
 
         return frames, moves, generate, can_afford, turns_left #, my_ships
 
-    def center_frames(self, frames, moves=None):
+    def center_frames(self, frames, moves=None, include_shift=False):
         my_factory = frames[0, :, :, 3] > 0
         pos = np.squeeze(np.where(my_factory>0))
         expected_pos = np.squeeze(my_factory.shape)//2 # Assuming always square
@@ -295,9 +295,14 @@ class Game(object):
             moves = np.roll(moves, shift[1], axis=2)
             return frames, moves
         
-        return frames
+        if include_shift:
+            return frames, shift
+        else:
+            return frames
 
-    def pad_replay(self, frames, moves=None):
+    def pad_replay(self, frames, moves=None, include_padding=False):
+        
+        map_size = frames.shape[1]
     
         my_ships = (frames[:, :, :, 1] > 0.5).astype(np.float32)
         zeros = np.zeros(my_ships.shape, dtype=np.float32)
@@ -305,6 +310,11 @@ class Game(object):
         # Let's do full padding (by reflection)
         frames = np.concatenate([frames, frames, frames], axis=1)
         frames = np.concatenate([frames, frames, frames], axis=2)
+        
+        total_x_left_padding = map_size
+        total_x_right_padding = map_size
+        total_y_left_padding = map_size
+        total_y_right_padding = map_size
         
         if moves is not None:
             moves = np.concatenate([moves, moves, moves], axis=1)
@@ -325,6 +335,9 @@ class Game(object):
             my_ships = np.concatenate([zeros[:, -pad_y1:], my_ships, zeros[:, :pad_y2]], axis=1)
             zeros = np.concatenate([zeros[:, -pad_y1:], zeros, zeros[:, :pad_y2]], axis=1)
             
+            total_y_left_padding += pad_y1
+            total_y_right_padding += pad_y2
+            
             if moves is not None:
                 moves = np.concatenate([moves[:, -pad_y1:], moves, moves[:, :pad_y2]], axis=1)
             
@@ -332,6 +345,9 @@ class Game(object):
             pad_x2 = (max_dim - frames.shape[2]) - pad_x1
             frames = np.concatenate([frames[:, :, -pad_x1:], frames, frames[:, :, :pad_x2]], axis=2)
             my_ships = np.concatenate([zeros[:, :, -pad_x1:], my_ships, zeros[:, :, :pad_x2]], axis=2)
+            
+            total_x_left_padding += pad_x1
+            total_x_right_padding += pad_x2
         
             if moves is not None:
                 moves = np.concatenate([moves[:, :, -pad_x1:], moves, moves[:, :, :pad_x2]], axis=2)
@@ -339,7 +355,12 @@ class Game(object):
         if moves is not None:
             return frames, my_ships.astype('uint8'), moves.astype('uint8')
         
-        return frames, my_ships
+        padding = total_x_left_padding, total_x_right_padding, total_y_left_padding, total_y_right_padding
+
+        if include_padding:
+            return frames, my_ships, padding
+        else:
+            return frames, my_ships
     
     def reverse_padding(self, true_size):
         pass

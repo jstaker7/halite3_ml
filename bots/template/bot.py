@@ -4,6 +4,7 @@ import os
 import sys
 import time
 import logging
+import json
 
 logging.basicConfig(filename='./test.log',
                             #filemode='a',
@@ -51,63 +52,92 @@ from data_utils import Game
 #    time.sleep(1)
 #ghvhgv
 
-def update_frame(frame):
+# Required inputs:
+# production, has_ship, entity_energies, factories, has_dropoff
+# can_afford
+# turns_left
+
+def update_frame(frame, num_players, my_id):
+
+    # Some channels get refreshed entirely
+    frame[:, :, [1,2,4]] = 0
 
     turn_number = input()
-    #logging.info(turn_number)
     
-    num_players = 2
+    # TODO: Add in feature to account for my halite vs the opponents
     
+    my_halite = None
+    my_ships = None
+
     for _ in range(num_players):
-        player, num_ships, num_dropoffs, halite = map(int, input().split())
-        logging.info(player)
-        logging.info(num_ships)
-        logging.info(num_dropoffs)
-        logging.info(halite)
-    
-        ships = {id: (id, x, y, h) for (id, x, y, h) in [map(int, input().split()) for _ in range(num_ships)]}
-        dropoffs = {id: (id, x, y) for (id, x, y) in [map(int, input().split()) for _ in range(num_dropoffs)]}
+        player, num_ships, num_dropoffs, halite = [int(x) for x in input().split()]
         
+        ships = [[int(x) for x in input().split()] for _ in range(num_ships)]
+        dropoffs = [[int(x) for x in input().split()] for _ in range(num_dropoffs)]
+        
+        if player == my_id:
+            my_halite = halite
+            my_ships = ships
+        
+        for ship in ships:
+            id, x, y, h = ship
+            frame[y, x, 2] = h
+            if id == my_id:
+                frame[y, x, 1] = 1.
+            else:
+                frame[y, x, 1] = -1.
+    
+        for dropoff in dropoffs:
+            id, x, y = dropoff
+            if id == my_id:
+                frame[y, x, 4] = 1.
+            else:
+                frame[y, x, 4] = -1.
+
+    
     for _ in range(int(input())):
-        x, y, h = map(int, input().split())
+        x, y, h = [int(x) for x in input().split()]
         frame[y, x, 0] = h
 
-    return frame
+    assert my_halite is not None
 
-def initialize_frame():
+    can_afford_both = my_halite > 4999.
+    can_afford_drop = my_halite > 3999.
+    can_afford_ship = my_halite > 999.
+
+    can_afford = np.stack([can_afford_ship, can_afford_drop, can_afford_both], -1)
+
+    return frame, turn_number, can_afford, my_ships
+
+def get_initial_data():
     raw_constants = input()
-    
-    #logging.info(raw_constants)
 
-    #json.loads(raw_constants)
+    constants = json.loads(raw_constants)
+    
+    max_turns = constants['MAX_TURNS'] # Only one I think we need
 
-    num_players, my_id = map(int, input().split())
+    num_players, my_id = [int(x) for x in input().split()]
     
-    #logging.info(num_players)
-    #logging.info(my_id)
-    
-    num_players = 2
-    
+    player_tups = []
     for player in range(num_players):
-        player, shipyard_x, shipyard_y = map(int, input().split())
-        #logging.info(player)
-        #logging.info(shipyard_x)
-        #logging.info(shipyard_y)
+        p_tup = map(int, input().split())
+        player_tups.append(p_tup)
     
     map_width, map_height = map(int, input().split())
-    #game_map = [[None for _ in range(map_width)] for _ in range(map_height)]
+    map_dim = map_width # Assuming square maps (to keep things simple)
+
     game_map = []
-    for _ in range(map_height):
+    for _ in range(map_dim):
         row = [int(x) for x in input().split()]
         game_map.append(row)
 
-    frame = np.array(game_map)
-    #logging.info(frame)
+    halite = np.array(game_map)
 
-    # Not all info has been provided yet. We need to call an update to fill in
-    # the missing info.
+    return max_turns, num_players, my_id, halite, player_tups, map_dim
 
-    return frame
+game = Game()
+
+valid_moves = ['o', 'n', 'e', 's', 'w', 'c']
 
 # Load the model
 with tf.Session() as sess:
@@ -118,12 +148,21 @@ with tf.Session() as sess:
     frames_node = tf.get_collection('frames')[0]
     can_afford_node = tf.get_collection('can_afford')[0]
     turns_left_node = tf.get_collection('turns_left')[0]
-    my_ships_node = tf.get_collection('my_ships')[0]
     moves_node = tf.get_collection('m_logits')[0]
     generate_node = tf.get_collection('g_logits')[0]
     
-    frame = initialize_frame()
-
+    max_turns, num_players, my_id, halite, player_tups, map_dim = get_initial_data()
+    
+    frame = np.zeros((map_dim, map_dim, 5), dtype=np.float32)
+    frame[:, :, 0] = halite
+    
+    for player in player_tups:
+        player, shipyard_x, shipyard_y = player
+        if int(player) == my_id:
+            frame[shipyard_y, shipyard_x, 3] = 1.
+        else:
+            frame[shipyard_y, shipyard_x, 3] = -1.
+    
     # Send name
     print("jstaker7", flush=True)
     #sys.stdout.flush()
@@ -134,33 +173,67 @@ with tf.Session() as sess:
 #        time.sleep(1)
 
     while True:
-        frame = update_frame(frame)
-        # You extract player metadata and the updated map metadata here for convenience.
-        #me = game.me
-        #logging.info(me)
-        #game_map = game.game_map
-        #logging.info(game_map)
-        #sfsdfdfs
-        # A command queue holds all the commands you will run this turn. You build this list up and submit it at the
-        #   end of the turn.
-        command_queue = []
+        # TODO: Still need to center the frame according to my shipyard
+        # And then shift it back again?
+        frame, turn_number, can_afford, my_ships = update_frame(frame, num_players, my_id)
+        
+        _frame = np.expand_dims(frame.copy(), 0) # Expects batch dim
+        
+        # Center
+        frame, shift = game.center_frames(_frame, include_shift=True)
+        
+        turns_left = (float(max_turns) - float(turn_number))/200. - 1. # TODO: Is this off by one?
+        turns_left = np.expand_dims(turns_left, 0)
+        
+        _frame, _, padding = game.pad_replay(_frame, include_padding=True)
+        
+        lxp, rxp, lyp, ryp = padding
+        
+        _frame[:, :, :, 0] =  (_frame[:, :, :, 0] - 500.)/500.
+        _frame[:, :, :, 2] =  (_frame[:, :, :, 2] - 500.)/500.
+        
+        feed_dict = {frames_node: _frame, # TODO: Pad, keep track of where the ships are
+                     can_afford_node: np.expand_dims(can_afford, 0),
+                     turns_left_node: np.expand_dims(turns_left, 0)
+                    }
 
-        for ship in me.get_ships():
-            # For each of your ships, move randomly if the ship is on a low halite location or the ship is full.
-            #   Else, collect halite.
-            if game_map[ship.position].halite_amount < constants.MAX_HALITE / 10 or ship.is_full:
-                command_queue.append(
-                    ship.move(
-                        random.choice([ Direction.North, Direction.South, Direction.East, Direction.West ])))
+        mo, go = sess.run([moves_node, generate_node], feed_dict=feed_dict)
+
+        go = np.squeeze(go) > 0 # Raw number, 0 is sigmoid()=0.5
+
+        # Remove batch dim; reverse transformations
+        mo = mo[0, lyp:ryp, lxp:rxp, :] # reverse pad
+        mo = np.roll(mo, -shift[0], axis=1) # reverse center
+        mo = np.roll(mo, -shift[1], axis=2) # reverse center
+
+        assert mo.shape[0] == mo.shape[1] == map_dim
+
+        mo = np.argmax(mo, -1)
+
+        logging.info(mo)
+
+        logging.info(go)
+
+        logging.info(mo.shape)
+
+        commands = []
+
+        if go:
+            commands.append("g")
+
+        for ship in my_ships:
+            id, x, y, h = ship
+            move_ix = mo[y, x]
+            move = valid_moves[move_ix]
+            if move == 'c':
+                move_cmd = "c {}".format(id)
             else:
-                command_queue.append(ship.stay_still())
+                move_cmd = "m {} {}".format(id, move)
+                
+            commands.append(move_cmd)
 
-        # If the game is in the first 200 turns and you have enough halite, spawn a ship.
-        # Don't spawn a ship if you currently have a ship at port, though - the ships will collide.
-        if game.turn_number <= 200 and me.halite_amount >= constants.SHIP_COST and not game_map[me.shipyard].is_occupied:
-            command_queue.append(me.shipyard.spawn())
 
-        # Send your moves back to the game environment, ending this turn.
-        game.end_turn(command_queue)
-
+        print(" ".join(commands))
+        sys.stdout.flush()
+ 
 
