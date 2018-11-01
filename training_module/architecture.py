@@ -60,9 +60,9 @@ def build_model():
     final_state = tf.concat([d_l8_p, ca, tl], -1)
     latent = tf.layers.dense(final_state, 256, activation=tf.nn.relu)
 
-    u_l8_a = tf.layers.conv2d_transpose(latent, 1024, 3, 2, activation=tf.nn.relu, padding='same') # 2
+    u_l8_a = tf.layers.conv2d_transpose(latent, 256, 3, 2, activation=tf.nn.relu, padding='same') # 2
     u_l8_c = tf.concat([u_l8_a, d_l8_a], -1)
-    u_l8_s = tf.layers.conv2d(u_l8_c, 1024, 3, activation=tf.nn.relu, padding='same')
+    u_l8_s = tf.layers.conv2d(u_l8_c, 512, 3, activation=tf.nn.relu, padding='same')
 
     u_l7_a = tf.layers.conv2d_transpose(u_l8_s, 512, 3, 2, activation=tf.nn.relu, padding='same') # 4
     u_l7_c = tf.concat([u_l7_a, d_l7_a], -1)

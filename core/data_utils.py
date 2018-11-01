@@ -1,6 +1,9 @@
 import copy
 import json
-import zstd
+try:
+    import zstd
+except:
+    pass
 import numpy as np
 
 
