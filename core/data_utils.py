@@ -330,7 +330,7 @@ class Game(object):
         
         # Ensure all get padded to the same max dim
         #max_dim = 192
-        max_dim = 256 # For easier u-net implementation
+        max_dim = 128 # For easier u-net implementation
         if frames.shape[1] != max_dim:
             pad_y1 = (max_dim - frames.shape[1])//2
             pad_y2 = (max_dim - frames.shape[1]) - pad_y1
@@ -348,6 +348,58 @@ class Game(object):
             pad_x2 = (max_dim - frames.shape[2]) - pad_x1
             frames = np.concatenate([frames[:, :, -pad_x1:], frames, frames[:, :, :pad_x2]], axis=2)
             my_ships = np.concatenate([zeros[:, :, -pad_x1:], my_ships, zeros[:, :, :pad_x2]], axis=2)
+            
+            total_x_left_padding += pad_x1
+            total_x_right_padding += pad_x2
+        
+            if moves is not None:
+                moves = np.concatenate([moves[:, :, -pad_x1:], moves, moves[:, :, :pad_x2]], axis=2)
+
+        if moves is not None:
+            return frames, my_ships.astype('uint8'), moves.astype('uint8')
+        
+        padding = total_x_left_padding, total_x_right_padding, total_y_left_padding, total_y_right_padding
+
+        if include_padding:
+            return frames, my_ships, padding
+        else:
+            return frames, my_ships
+
+    def pad_replay(self, frames, moves=None, include_padding=False):
+        
+        map_size = frames.shape[1]
+    
+        my_ships = (frames[:, :, :, 1] > 0.5).astype(np.float32)
+        zeros = np.zeros(my_ships.shape, dtype=np.float32)
+    
+        total_x_left_padding = 0
+        total_x_right_padding = 0
+        total_y_left_padding = 0
+        total_y_right_padding = 0
+
+        # Ensure all get padded to the same max dim
+        #max_dim = 192
+        max_dim = 128 # For easier u-net implementation
+        while frames.shape[1] != max_dim:
+            pad_y1 = (min(max_dim, frames.shape[1]*3) - frames.shape[1])//2
+            pad_y2 = (min(max_dim, frames.shape[1]*3) - frames.shape[1]) - pad_y1
+            frames = np.concatenate([frames[:, -pad_y1:], frames, frames[:, :pad_y2]], axis=1)
+
+            my_ships = np.concatenate([zeros[:, -pad_y1:], my_ships, zeros[:, :pad_y2]], axis=1)
+            zeros = np.concatenate([zeros[:, -pad_y1:], zeros, zeros[:, :pad_y2]], axis=1)
+            
+            total_y_left_padding += pad_y1
+            total_y_right_padding += pad_y2
+            
+            if moves is not None:
+                moves = np.concatenate([moves[:, -pad_y1:], moves, moves[:, :pad_y2]], axis=1)
+            
+            pad_x1 = (min(max_dim, frames.shape[2]*3) - frames.shape[2])//2
+            pad_x2 = (min(max_dim, frames.shape[2]*3) - frames.shape[2]) - pad_x1
+            frames = np.concatenate([frames[:, :, -pad_x1:], frames, frames[:, :, :pad_x2]], axis=2)
+            my_ships = np.concatenate([zeros[:, :, -pad_x1:], my_ships, zeros[:, :, :pad_x2]], axis=2)
+            
+            zeros = np.concatenate([zeros[:, :, -pad_x1:], zeros, zeros[:, :, :pad_x2]], axis=2)
             
             total_x_left_padding += pad_x1
             total_x_right_padding += pad_x2

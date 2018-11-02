@@ -6,14 +6,14 @@ def build_model():
     max_s = [1, 2, 2, 1]
     learning_rate = 0.0005
 
-    frames = tf.placeholder(tf.float32, [None, 256, 256, 5])
+    frames = tf.placeholder(tf.float32, [None, 128, 128, 5])
     can_afford = tf.placeholder(tf.float32, [None, 3])
     turns_left = tf.placeholder(tf.float32, [None, 1])
-    my_ships = tf.placeholder(tf.uint8, [None, 256, 256, 1])
+    my_ships = tf.placeholder(tf.uint8, [None, 128, 128, 1])
     
     my_ships = tf.cast(my_ships, tf.float32)
 
-    moves = tf.placeholder(tf.uint8, [None, 256, 256, 1])
+    moves = tf.placeholder(tf.uint8, [None, 128, 128, 1])
     generate = tf.placeholder(tf.float32, [None, 1])
 
     tf.add_to_collection('frames', frames)
@@ -33,10 +33,10 @@ def build_model():
     tl = tf.expand_dims(tl, 1)
     tl = tf.expand_dims(tl, 1)
 
-    d_l1_a = tf.layers.conv2d(frames, 16, 3, activation=tf.nn.relu, padding='same')
-    d_l1_p = tf.nn.max_pool(d_l1_a, max_s, max_s, padding='VALID') # 128
+#    d_l1_a = tf.layers.conv2d(frames, 16, 3, activation=tf.nn.relu, padding='same')
+#    d_l1_p = tf.nn.max_pool(d_l1_a, max_s, max_s, padding='VALID') # 128
 
-    d_l2_a = tf.layers.conv2d(d_l1_p, 32, 3, activation=tf.nn.relu, padding='same')
+    d_l2_a = tf.layers.conv2d(frames, 32, 3, activation=tf.nn.relu, padding='same')
     d_l2_p = tf.nn.max_pool(d_l2_a, max_s, max_s, padding='VALID') # 64
 
     d_l3_a = tf.layers.conv2d(d_l2_p, 32, 3, activation=tf.nn.relu, padding='same')
@@ -88,15 +88,15 @@ def build_model():
     u_l2_c = tf.concat([u_l2_a, d_l2_a], -1)
     u_l2_s = tf.layers.conv2d(u_l2_c, 32, 3, activation=tf.nn.relu, padding='same')
 
-    u_l1_a = tf.layers.conv2d_transpose(u_l2_s, 64, 3, 2, activation=tf.nn.relu, padding='same') # 256
-    u_l1_c = tf.concat([u_l1_a, d_l1_a], -1)
-    u_l1_s = tf.layers.conv2d(u_l1_c, 63, 3, activation=tf.nn.relu, padding='same')
-    
+#    u_l1_a = tf.layers.conv2d_transpose(u_l2_s, 64, 3, 2, activation=tf.nn.relu, padding='same') # 256
+#    u_l1_c = tf.concat([u_l1_a, d_l1_a], -1)
+#    u_l1_s = tf.layers.conv2d(u_l1_c, 63, 3, activation=tf.nn.relu, padding='same')
+
     generate_logits = tf.layers.dense(latent, 1, activation=None)
     
     generate_logits = tf.squeeze(generate_logits, [1, 2])
 
-    moves_logits = tf.layers.conv2d(u_l1_s, 6, 3, activation=None, padding='same')
+    moves_logits = tf.layers.conv2d(u_l2_s, 6, 3, activation=None, padding='same')
     
     tf.add_to_collection('m_logits', moves_logits)
     tf.add_to_collection('g_logits', generate_logits)
