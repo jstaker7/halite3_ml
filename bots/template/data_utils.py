@@ -1,6 +1,9 @@
 import copy
 import json
-import zstd
+try:
+    import zstd
+except:
+    pass
 import numpy as np
 
 
@@ -220,25 +223,26 @@ class Game(object):
         factories[fy, fx] = 1
 
         # normalize some of the arrays
-        production = (self.production - 500.)/1000. # Guessing on norm values for now
-
+        production = (self.production - 500.)/500. # Guessing on norm values for now
+        
         entities = self.entities.copy()
-        has_ship = entities > 0
-        has_ship_mask = np.sum(has_ship.astype(np.float32), -1)
-        my_ships = has_ship[:, :, :, pid].copy()
+        
+        my_ships = entities[:, :, :, 2+pid].copy()
 
-        entities = (np.sum(entities, -1) - 500.)/1000.
+        has_ship = np.sum(entities[:, :, :, 2:].copy().astype(np.float32), -1)
+        
+        has_ship_mask = has_ship.copy()
+        
+        # Convert enemy ships
+        has_ship = -1 * has_ship
+        has_ship[my_ships>0.5] = 1
+        
+        # Normalize
+        entity_energies = (entities[:, :, :, 0].copy().astype(np.float32) - 500.)/500.
+        entity_energies *= has_ship_mask
 
-
-        has_ship = -1 * np.sum(has_ship.astype(np.float32), axis=-1)
-        #print(entities.shape)
-        #print(my_ships.shape)
-        has_ship[my_ships] = 1
-        entities *= has_ship_mask
-        #print(has_ship[100, 20:40, 20:40])
-        #print(entities[100, 20:40, 20:40])
         has_ship = np.expand_dims(has_ship, -1)
-        entities = np.expand_dims(entities, -1)
+        entity_energies = np.expand_dims(entity_energies, -1)
 
         dropoffs = self.dropoffs
         has_dropoff = np.zeros((production.shape[0], *map_shape, 1), dtype=np.float32)
@@ -249,12 +253,12 @@ class Game(object):
                 v = 1. if oid == pid else -1.
                 has_dropoff[ix, y, x] = v
 
-        # factories need to be duplicated accross frames
+        # factories need to be duplicated across frames
         factories = np.repeat(np.expand_dims(factories, 0), production.shape[0], 0)
 
         production = np.expand_dims(production, -1)
 
-        frames = np.concatenate([production, has_ship, entities, factories, has_dropoff], axis=-1)
+        frames = np.concatenate([production, has_ship, entity_energies, factories, has_dropoff], axis=-1)
 
         # Note: 'no-moves' do not need explicit assignment since 0 means 'still'
         # and the arrays are initialled with zero.
@@ -281,7 +285,7 @@ class Game(object):
 
         return frames, moves, generate, can_afford, turns_left #, my_ships
 
-    def center_frames(self, frames, moves=None):
+    def center_frames(self, frames, moves=None, include_shift=False):
         my_factory = frames[0, :, :, 3] > 0
         pos = np.squeeze(np.where(my_factory>0))
         expected_pos = np.squeeze(my_factory.shape)//2 # Assuming always square
@@ -294,9 +298,14 @@ class Game(object):
             moves = np.roll(moves, shift[1], axis=2)
             return frames, moves
         
-        return frames
+        if include_shift:
+            return frames, shift
+        else:
+            return frames
 
-    def pad_replay(self, frames, moves=None):
+    def pad_replay(self, frames, moves=None, include_padding=False):
+        
+        map_size = frames.shape[1]
     
         my_ships = (frames[:, :, :, 1] > 0.5).astype(np.float32)
         zeros = np.zeros(my_ships.shape, dtype=np.float32)
@@ -304,6 +313,11 @@ class Game(object):
         # Let's do full padding (by reflection)
         frames = np.concatenate([frames, frames, frames], axis=1)
         frames = np.concatenate([frames, frames, frames], axis=2)
+        
+        total_x_left_padding = map_size
+        total_x_right_padding = map_size
+        total_y_left_padding = map_size
+        total_y_right_padding = map_size
         
         if moves is not None:
             moves = np.concatenate([moves, moves, moves], axis=1)
@@ -316,13 +330,16 @@ class Game(object):
         
         # Ensure all get padded to the same max dim
         #max_dim = 192
-        max_dim = 256 # For easier u-net implementation
+        max_dim = 128 # For easier u-net implementation
         if frames.shape[1] != max_dim:
             pad_y1 = (max_dim - frames.shape[1])//2
             pad_y2 = (max_dim - frames.shape[1]) - pad_y1
             frames = np.concatenate([frames[:, -pad_y1:], frames, frames[:, :pad_y2]], axis=1)
             my_ships = np.concatenate([zeros[:, -pad_y1:], my_ships, zeros[:, :pad_y2]], axis=1)
             zeros = np.concatenate([zeros[:, -pad_y1:], zeros, zeros[:, :pad_y2]], axis=1)
+            
+            total_y_left_padding += pad_y1
+            total_y_right_padding += pad_y2
             
             if moves is not None:
                 moves = np.concatenate([moves[:, -pad_y1:], moves, moves[:, :pad_y2]], axis=1)
@@ -331,6 +348,9 @@ class Game(object):
             pad_x2 = (max_dim - frames.shape[2]) - pad_x1
             frames = np.concatenate([frames[:, :, -pad_x1:], frames, frames[:, :, :pad_x2]], axis=2)
             my_ships = np.concatenate([zeros[:, :, -pad_x1:], my_ships, zeros[:, :, :pad_x2]], axis=2)
+            
+            total_x_left_padding += pad_x1
+            total_x_right_padding += pad_x2
         
             if moves is not None:
                 moves = np.concatenate([moves[:, :, -pad_x1:], moves, moves[:, :, :pad_x2]], axis=2)
@@ -338,7 +358,61 @@ class Game(object):
         if moves is not None:
             return frames, my_ships.astype('uint8'), moves.astype('uint8')
         
-        return frames, my_ships
+        padding = total_x_left_padding, total_x_right_padding, total_y_left_padding, total_y_right_padding
+
+        if include_padding:
+            return frames, my_ships, padding
+        else:
+            return frames, my_ships
+
+    def pad_replay(self, frames, moves=None, include_padding=False):
+        
+        map_size = frames.shape[1]
+    
+        my_ships = (frames[:, :, :, 1] > 0.5).astype(np.float32)
+        zeros = np.zeros(my_ships.shape, dtype=np.float32)
+    
+        total_x_left_padding = 0
+        total_x_right_padding = 0
+        total_y_left_padding = 0
+        total_y_right_padding = 0
+
+        # Ensure all get padded to the same max dim
+        #max_dim = 192
+        max_dim = 128 # For easier u-net implementation
+        while frames.shape[1] != max_dim:
+            pad_y1 = (min(max_dim, frames.shape[1]*3) - frames.shape[1])//2
+            pad_y2 = (min(max_dim, frames.shape[1]*3) - frames.shape[1]) - pad_y1
+            frames = np.concatenate([frames[:, -pad_y1:], frames, frames[:, :pad_y2]], axis=1)
+            my_ships = np.concatenate([zeros[:, -pad_y1:], my_ships, zeros[:, :pad_y2]], axis=1)
+            zeros = np.concatenate([zeros[:, -pad_y1:], zeros, zeros[:, :pad_y2]], axis=1)
+            
+            total_y_left_padding += pad_y1
+            total_y_right_padding += pad_y2
+            
+            if moves is not None:
+                moves = np.concatenate([moves[:, -pad_y1:], moves, moves[:, :pad_y2]], axis=1)
+            
+            pad_x1 = (min(max_dim, frames.shape[2]*3) - frames.shape[2])//2
+            pad_x2 = (min(max_dim, frames.shape[2]*3) - frames.shape[2]) - pad_x1
+            frames = np.concatenate([frames[:, :, -pad_x1:], frames, frames[:, :, :pad_x2]], axis=2)
+            my_ships = np.concatenate([zeros[:, :, -pad_x1:], my_ships, zeros[:, :, :pad_x2]], axis=2)
+            
+            total_x_left_padding += pad_x1
+            total_x_right_padding += pad_x2
+        
+            if moves is not None:
+                moves = np.concatenate([moves[:, :, -pad_x1:], moves, moves[:, :, :pad_x2]], axis=2)
+
+        if moves is not None:
+            return frames, my_ships.astype('uint8'), moves.astype('uint8')
+        
+        padding = total_x_left_padding, total_x_right_padding, total_y_left_padding, total_y_right_padding
+
+        if include_padding:
+            return frames, my_ships, padding
+        else:
+            return frames, my_ships
     
     def reverse_padding(self, true_size):
         pass

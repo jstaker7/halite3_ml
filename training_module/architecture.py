@@ -2,9 +2,8 @@ import tensorflow as tf
 
 def build_model():
 
-    size = 8 # Single size for easier debugging (for now)
     max_s = [1, 2, 2, 1]
-    learning_rate = 0.0005
+    learning_rate = 0.0001
 
     frames = tf.placeholder(tf.float32, [None, 128, 128, 5])
     can_afford = tf.placeholder(tf.float32, [None, 3])

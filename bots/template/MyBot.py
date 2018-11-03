@@ -6,26 +6,18 @@ import time
 import logging
 import json
 
-logging.basicConfig(filename='./test.log',
-                            #filemode='a',
-                            #format='%(asctime)s,%(msecs)d %(name)s %(levelname)s %(message)s',
-                            #datefmt='%H:%M:%S',
-                            level=logging.DEBUG)
-
 #logger = logging.getLogger('./test.log')
 #logger.setLevel(30)
-logging.info('test')
+#logging.info('test')
 
 import numpy as np
 
 # Turning off logging doesn't seem to be working
-#os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 import tensorflow as tf
 #tf.logging.set_verbosity(tf.logging.WARN) # Turn this on before uploading
 #tf.logging.set_verbosity(0)
 #tf.logging.set_verbosity()
-
-import hlt
 
 cd = os.path.dirname(os.path.realpath(__file__))
 sys.path.append(cd)
@@ -68,6 +60,8 @@ def update_frame(frame, num_players, my_id):
     
     my_halite = None
     my_ships = None
+    
+    has_ship = np.zeros((frame.shape[1], frame.shape[1]), dtype=np.uint8)
 
     for _ in range(num_players):
         player, num_ships, num_dropoffs, halite = [int(x) for x in input().split()]
@@ -82,14 +76,16 @@ def update_frame(frame, num_players, my_id):
         for ship in ships:
             id, x, y, h = ship
             frame[y, x, 2] = h
-            if id == my_id:
+            if player == my_id:
                 frame[y, x, 1] = 1.
             else:
                 frame[y, x, 1] = -1.
+            
+            has_ship[y, x] = 1
     
         for dropoff in dropoffs:
             id, x, y = dropoff
-            if id == my_id:
+            if player == my_id:
                 frame[y, x, 4] = 1.
             else:
                 frame[y, x, 4] = -1.
@@ -106,8 +102,10 @@ def update_frame(frame, num_players, my_id):
     can_afford_ship = my_halite > 999.
 
     can_afford = np.stack([can_afford_ship, can_afford_drop, can_afford_both], -1)
+    
+    has_ship = np.expand_dims(has_ship, 0)
 
-    return frame, turn_number, can_afford, my_ships
+    return frame, turn_number, can_afford, my_ships, has_ship
 
 def get_initial_data():
     raw_constants = input()
@@ -143,7 +141,9 @@ valid_moves = ['o', 'n', 'e', 's', 'w', 'c']
 with tf.Session() as sess:
     tf.train.import_meta_graph(os.path.join(cd, "model.ckpt.meta"))
     saver = tf.train.Saver()
+    #saver.restore(sess, os.path.join(cd, "model.ckpt"))
     saver.restore(sess, os.path.join(cd, "model.ckpt"))
+    
 
     frames_node = tf.get_collection('frames')[0]
     can_afford_node = tf.get_collection('can_afford')[0]
@@ -152,6 +152,12 @@ with tf.Session() as sess:
     generate_node = tf.get_collection('g_logits')[0]
     
     max_turns, num_players, my_id, halite, player_tups, map_dim = get_initial_data()
+    
+    logging.basicConfig(filename='{}-bot.log'.format(my_id),
+                                filemode='w',
+                                #format='%(asctime)s,%(msecs)d %(name)s %(levelname)s %(message)s',
+                                #datefmt='%H:%M:%S',
+                                level=logging.DEBUG)
     
     frame = np.zeros((map_dim, map_dim, 5), dtype=np.float32)
     frame[:, :, 0] = halite
@@ -175,12 +181,15 @@ with tf.Session() as sess:
     while True:
         # TODO: Still need to center the frame according to my shipyard
         # And then shift it back again?
-        frame, turn_number, can_afford, my_ships = update_frame(frame, num_players, my_id)
+        frame, turn_number, can_afford, my_ships, has_ship = update_frame(frame, num_players, my_id)
         
         _frame = np.expand_dims(frame.copy(), 0) # Expects batch dim
         
+        _frame[:, :, :, 0] =  (_frame[:, :, :, 0] - 500.)/500.
+        _frame[:, :, :, 2] =  has_ship * ((_frame[:, :, :, 2] - 500.)/500.)
+        
         # Center
-        frame, shift = game.center_frames(_frame, include_shift=True)
+        _frame, shift = game.center_frames(_frame, include_shift=True)
         
         turns_left = (float(max_turns) - float(turn_number))/200. - 1. # TODO: Is this off by one?
         turns_left = np.expand_dims(turns_left, 0)
@@ -189,8 +198,8 @@ with tf.Session() as sess:
         
         lxp, rxp, lyp, ryp = padding
         
-        _frame[:, :, :, 0] =  (_frame[:, :, :, 0] - 500.)/500.
-        _frame[:, :, :, 2] =  (_frame[:, :, :, 2] - 500.)/500.
+        logging.info(_frame.shape)
+        logging.info(_frame[0, 124:-124, 124:-124, :-1])
         
         feed_dict = {frames_node: _frame, # TODO: Pad, keep track of where the ships are
                      can_afford_node: np.expand_dims(can_afford, 0),
@@ -200,29 +209,33 @@ with tf.Session() as sess:
         mo, go = sess.run([moves_node, generate_node], feed_dict=feed_dict)
 
         go = np.squeeze(go) > 0 # Raw number, 0 is sigmoid()=0.5
-
+        
+        mo = np.argmax(mo, -1)
+        logging.info(np.max(mo))
         # Remove batch dim; reverse transformations
-        mo = mo[0, lyp:ryp, lxp:rxp, :] # reverse pad
-        mo = np.roll(mo, -shift[0], axis=1) # reverse center
-        mo = np.roll(mo, -shift[1], axis=2) # reverse center
-
+        mo = mo[0, lyp:-ryp, lxp:-rxp] # reverse pad
+        #logging.info(mo[10:30, 10:30])
+        mo = np.roll(mo, -shift[0], axis=0) # reverse center
+        mo = np.roll(mo, -shift[1], axis=1) # reverse center
+        
         assert mo.shape[0] == mo.shape[1] == map_dim
 
-        mo = np.argmax(mo, -1)
 
-        logging.info(mo)
+        
+        logging.info(np.max(mo))
+        logging.info(mo[10:30, 10:30])
 
-        logging.info(go)
-
-        logging.info(mo.shape)
+        #logging.info(mo)
 
         commands = []
 
         if go:
             commands.append("g")
-
+        logging.info('hmm')
+        logging.info(len(my_ships))
         for ship in my_ships:
             id, x, y, h = ship
+            logging.info((id, x, y))
             move_ix = mo[y, x]
             move = valid_moves[move_ix]
             if move == 'c':
@@ -235,5 +248,5 @@ with tf.Session() as sess:
 
         print(" ".join(commands))
         sys.stdout.flush()
- 
+
 
