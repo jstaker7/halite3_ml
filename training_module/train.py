@@ -60,9 +60,13 @@ with gzip.open(os.path.join(replay_root, 'INDEX.pkl'), 'rb') as infile:
 keep = []
 for rp in master_index:
     for p in master_index[rp]['players']:
-        if 'Rachol' == p['name'].split(' ')[0]:
+        name, _version = p['name'].split(' ')
+        version = int(_version[1:].strip())
+        if 'Rachol' == name and version == 60:
             keep.append(rp)
             break
+
+assert keep, print(len(keep))
 
 # Test speed before MP
 #for rp in keep:
@@ -252,6 +256,7 @@ try:
     #    assert len(buffer) > batch_size
 
         print("Training...")
+        losses = []
         for step in range(2000000):
         
             batch = batch_queue.get()
@@ -307,10 +312,10 @@ try:
                         }
 
             loss, _ = sess.run([loss_node, optimizer_node], feed_dict=feed_dict)
-
-            if step % 1000 == 0:
+            losses.append(loss)
+            if step % 10000 == 0:
                 print(step)
-                print(loss)
+                print(np.mean(losses[-1000:]))
                 saver.save(sess, os.path.join(save_dir, 'model.ckpt'))
 
     #        for i in range(100000):
