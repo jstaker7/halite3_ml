@@ -303,7 +303,7 @@ class Game(object):
         else:
             return frames
 
-    def pad_replay(self, frames, moves=None, include_padding=False):
+    def pad_replay_old(self, frames, moves=None, include_padding=False):
         
         map_size = frames.shape[1]
     
