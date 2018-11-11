@@ -16,7 +16,7 @@ try:
     today = datetime.datetime.now() - datetime.timedelta(days=offset)
     today = str(today).split('-')[:3]
     today[-1] = today[-1].split(' ')[0]
-    today = [str(int(x)) for x in today]
+    #today = [str(int(x)) for x in today]
 
     date = ''.join(today)
 
