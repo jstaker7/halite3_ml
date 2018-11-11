@@ -224,6 +224,7 @@ class Game(object):
 
         # normalize some of the arrays
         production = (self.production - 500.)/500. # Guessing on norm values for now
+        #production = (self.production - 119.)/124.
         
         entities = self.entities.copy()
         

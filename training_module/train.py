@@ -60,9 +60,9 @@ with gzip.open(os.path.join(replay_root, 'INDEX.pkl'), 'rb') as infile:
 keep = []
 for rp in master_index:
     for p in master_index[rp]['players']:
-        name, _version = p['name'].split(' ')
-        version = int(_version[1:].strip())
-        if 'Rachol' == name and version == 60:
+        name, _version = p['name'].split(' v')
+        version = int(_version.strip())
+        if 'TheDuck314' == name and version == 29:
             keep.append(rp)
             break
 
@@ -181,7 +181,7 @@ def worker(queue, size):
         except:
             continue
         
-        frames, moves, generate, can_afford, turns_left = game.get_training_frames(pname='Rachol')
+        frames, moves, generate, can_afford, turns_left = game.get_training_frames(pname='TheDuck314')
         
         # Avoid GC issues
         frames = copy.deepcopy(frames)
@@ -242,6 +242,7 @@ moves_node = tf.get_collection('moves')[0]
 generate_node = tf.get_collection('generate')[0]
 loss_node = tf.get_collection('loss')[0]
 optimizer_node = tf.get_collection('optimizer')[0]
+is_training = tf.get_collection('is_training')[0]
 
 saver = tf.train.Saver()
 try:
@@ -257,7 +258,7 @@ try:
 
         print("Training...")
         losses = []
-        for step in range(2000000):
+        for step in range(20000000):
         
             batch = batch_queue.get()
             
@@ -309,6 +310,7 @@ try:
                          my_ships_node: s_batch,
                          moves_node: m_batch,
                          generate_node: g_batch,
+                         is_training: True
                         }
 
             loss, _ = sess.run([loss_node, optimizer_node], feed_dict=feed_dict)
