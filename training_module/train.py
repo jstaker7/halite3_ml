@@ -62,7 +62,7 @@ for rp in master_index:
     for p in master_index[rp]['players']:
         name, _version = p['name'].split(' v')
         version = int(_version.strip())
-        if 'TheDuck314' == name and version == 29:
+        if 'Rachol' == name and version == 60:
             keep.append(rp)
             break
 
@@ -181,7 +181,7 @@ def worker(queue, size):
         except:
             continue
         
-        frames, moves, generate, can_afford, turns_left = game.get_training_frames(pname='TheDuck314')
+        frames, moves, generate, can_afford, turns_left = game.get_training_frames(pname='Rachol')
         
         # Avoid GC issues
         frames = copy.deepcopy(frames)
