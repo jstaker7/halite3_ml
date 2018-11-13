@@ -88,7 +88,7 @@ assert keep, print(len(keep))
 
 min_buffer_size = 5000
 max_buffer_size = 8000
-batch_size = 64
+batch_size = 32
 
 
 def batch_prep(buffer, batch_queue):

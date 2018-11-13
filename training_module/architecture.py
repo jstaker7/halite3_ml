@@ -36,7 +36,7 @@ def build_model(inference=False):
 #    d_l1_a = tf.layers.conv2d(frames, 16, 3, activation=tf.nn.relu, padding='same')
 #    d_l1_p = tf.nn.max_pool(d_l1_a, max_s, max_s, padding='VALID') # 128
 
-    d_l2_a_1 = tf.layers.conv2d(frames, 256, 5, activation=tf.nn.relu, padding='same')
+    d_l2_a_1 = tf.layers.conv2d(frames, 128, 5, activation=tf.nn.relu, padding='same')
     d_l2_a_1 = tf.layers.batch_normalization(d_l2_a_1, training=is_training, name='bn1')
     d_l2_a_2 = tf.layers.conv2d(d_l2_a_1, 32, 5, activation=tf.nn.relu, padding='same')
     d_l2_a_2 = tf.layers.batch_normalization(d_l2_a_2, training=is_training, name='bn2')
