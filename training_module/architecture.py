@@ -81,12 +81,12 @@ def build_model(inference=False):
     pre_latent = tf.layers.dense(final_state, 512, activation=tf.nn.relu)
     latent = tf.layers.dense(pre_latent, 512, activation=tf.nn.relu)
 
-    u_l8_a = tf.layers.conv2d_transpose(latent, 512, 5, 2, activation=tf.nn.relu, padding='same') # 2
+    u_l8_a = tf.layers.conv2d_transpose(latent, 512, 3, 2, activation=tf.nn.relu, padding='same') # 2
     u_l8_c = tf.concat([u_l8_a, d_l8_a_1], -1)
     u_l8_s = tf.layers.conv2d(u_l8_c, 512, 3, activation=tf.nn.relu, padding='same')
     u_l8_s = tf.layers.batch_normalization(u_l8_s, training=is_training, name='bn18')
 
-    u_l7_a = tf.layers.conv2d_transpose(u_l8_s, 512, 5, 2, activation=tf.nn.relu, padding='same') # 4
+    u_l7_a = tf.layers.conv2d_transpose(u_l8_s, 512, 3, 2, activation=tf.nn.relu, padding='same') # 4
     u_l7_c = tf.concat([u_l7_a, d_l7_a], -1)
     u_l7_s = tf.layers.conv2d(u_l7_c, 512, 3, activation=tf.nn.relu, padding='same')
     u_l7_s = tf.layers.batch_normalization(u_l7_s, training=is_training, name='bn19')
@@ -134,8 +134,14 @@ def build_model(inference=False):
 
     moves_logits = tf.layers.conv2d(u_l2_s_5, 6, 3, activation=None, padding='same')
     
+#    m_logits = tf.identity(moves_logits, 'm_logits')
+#    g_logits = tf.identity(generate_logits, 'g_logits')
+
     tf.add_to_collection('m_logits', moves_logits)
     tf.add_to_collection('g_logits', generate_logits)
+    
+    if inference:
+        return
 
     losses = tf.nn.softmax_cross_entropy_with_logits_v2(labels=moves,
                                                 logits=moves_logits,
