@@ -15,6 +15,11 @@ from core.data_utils import Game
 
 from training_module.architecture import build_model
 
+np.random.seed(8)
+
+RESTORE = True
+RESTORE_WHICH = '1'
+
 # Given history of frames
 # 1) Predict which player is which
 # 2) Keep a history vector
@@ -57,14 +62,20 @@ if not os.path.exists(replay_root):
 with gzip.open(os.path.join(replay_root, 'INDEX.pkl'), 'rb') as infile:
     master_index = pickle.load(infile)
 
+PNAME = 'TheDuck314'
+
 keep = []
 for rp in master_index:
     for p in master_index[rp]['players']:
         name, _version = p['name'].split(' v')
         version = int(_version.strip())
-        if 'TheDuck314' == name and version == 29:
+        if PNAME == name and version == 31:
             keep.append(rp)
             break
+
+keep = np.random.shuffle(keep)
+
+keep, valid = keep[:len(keep)//2], keep[len(keep)//2:]
 
 assert keep, print(len(keep))
 
@@ -181,7 +192,7 @@ def worker(queue, size):
         except:
             continue
         
-        frames, moves, generate, can_afford, turns_left = game.get_training_frames(pname='TheDuck314')
+        frames, moves, generate, can_afford, turns_left = game.get_training_frames(pname=PNAME)
         
         # Avoid GC issues
         frames = copy.deepcopy(frames)
@@ -213,19 +224,80 @@ def worker(queue, size):
 #                queue.put(buffer.pop())
         #queue.put(size)
 
+def v_worker(queue, size):
+    np.random.seed(size) # Use size as seed
+    # Filter out games that are not the right size
+    # Note: Replay naming is not consistent (game id was added later)
+    s_keep = [x for x in valid if int(x.split('-')[-2]) == size]
+    print("{0} maps with size {1}x{1}".format(len(s_keep), size))
+    #buffer = []
+    while True:
+        which_game = np.random.choice(s_keep)
+        path = os.path.join(replay_root, '{}', '{}')
+        day = which_game.replace('ts2018-halite-3-gold-replays_replay-', '').split('-')[0]
+        path = path.format(day, which_game)
+
+        game = Game()
+        try:
+            game.load_replay(path)
+        except:
+            continue
+        
+        frames, moves, generate, can_afford, turns_left = game.get_training_frames(pname=PNAME)
+        
+        # Avoid GC issues
+        frames = copy.deepcopy(frames)
+        moves = copy.deepcopy(moves)
+        generate = copy.deepcopy(generate)
+        can_afford = copy.deepcopy(can_afford)
+        turns_left = copy.deepcopy(turns_left)
+        del game
+        
+#        frames = frames[:25]
+#        moves = moves[:25]
+#        generate = generate[:25]
+#        can_afford = can_afford[:25]
+#        turns_left = turns_left[:25]
+
+        for pair in zip(frames, moves, generate, can_afford, turns_left):
+            #buffer.append(pair)
+            queue.put(copy.deepcopy(pair))
+
+        del frames
+        del moves
+        del generate
+        del can_afford
+        del turns_left
+
+#        if len(buffer) > 10:
+#            shuffle(buffer)
+#            while len(buffer) > 0:
+#                queue.put(buffer.pop())
+        #queue.put(size)
+
 
 # 5 queues, 1 for each map size (to improve compute efficiency)
 queues = [Queue(32) for _ in range(5)]
 queue_m_sizes = [32, 40, 48, 56, 64]
 
+v_queues = [Queue(32) for _ in range(5)]
+v_queue_m_sizes = [32, 40, 48, 56, 64]
+
 batch_queue = Queue(2)
 buffer_queue = PriorityQueue(max_buffer_size)
 
+v_batch_queue = Queue(2)
+v_buffer_queue = PriorityQueue(max_buffer_size)
+
 #processes = [Process(target=worker, args=(queues[ix], queue_m_sizes[ix])) for ix in range(5)]
 processes = [Thread(target=worker, args=(queues[ix], queue_m_sizes[ix])) for ix in range(5)]
+v_processes = [Thread(target=v_worker, args=(v_queues[ix], v_queue_m_sizes[ix])) for ix in range(5)]
 
 buffer_thread = Thread(target=buffer, args=(queues, buffer_queue))
 batch_thread = Thread(target=batch_prep, args=(buffer_queue, batch_queue))
+
+v_buffer_thread = Thread(target=buffer, args=(v_queues, v_buffer_queue))
+v_batch_thread = Thread(target=batch_prep, args=(v_buffer_queue, v_batch_queue))
 
 processes.append(buffer_thread)
 processes.append(batch_thread)
@@ -245,9 +317,14 @@ optimizer_node = tf.get_collection('optimizer')[0]
 is_training = tf.get_collection('is_training')[0]
 
 saver = tf.train.Saver()
+best = 999
 try:
     with tf.Session() as sess:
         tf.initializers.global_variables().run()
+        
+        if RESTORE:
+            print("Restoring...")
+            saver.restore(sess, os.path.join('/home/staker/Projects/halite/trained_models/', RESTORE_WHICH, "model.ckpt"))
         
         # Training buffer to decorrelate examples seen in batches
     #    buffer = []
@@ -316,9 +393,34 @@ try:
             loss, _ = sess.run([loss_node, optimizer_node], feed_dict=feed_dict)
             losses.append(loss)
             if step % 10000 == 0:
-                print(step)
-                print(np.mean(losses[-1000:]))
-                saver.save(sess, os.path.join(save_dir, 'model.ckpt'))
+                v_losses = []
+                for _ in range(1000):
+                    batch = v_batch_queue.get()
+                    
+                    f_batch, m_batch, g_batch, c_batch, t_batch, s_batch = batch
+    
+                    g_batch = np.expand_dims(g_batch, -1)
+                    t_batch = np.expand_dims(t_batch, -1)
+                    m_batch = np.expand_dims(m_batch, -1)
+                    s_batch = np.expand_dims(s_batch, -1)
+
+                    feed_dict = {frames_node: f_batch,
+                                 can_afford_node: c_batch,
+                                 turns_left_node: t_batch,
+                                 my_ships_node: s_batch,
+                                 moves_node: m_batch,
+                                 generate_node: g_batch,
+                                 is_training: False
+                                }
+
+                    loss = sess.run(loss_node, feed_dict=feed_dict)
+                    v_losses.append(loss)
+                    
+                print("{} {} {}".format(step, np.mean(losses[-1000:]), np.mean(v_losses)))
+                if np.mean(v_losses) < best:
+                    best = np.mean(v_losses)
+                    print("*** new best ***")
+                    saver.save(sess, os.path.join(save_dir, 'model.ckpt'))
 
     #        for i in range(100000):
     #            loss, _ = sess.run([loss_node, optimizer_node], feed_dict=feed_dict)
