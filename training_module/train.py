@@ -291,7 +291,7 @@ v_buffer_queue = PriorityQueue(max_buffer_size)
 
 #processes = [Process(target=worker, args=(queues[ix], queue_m_sizes[ix])) for ix in range(5)]
 processes = [Thread(target=worker, args=(queues[ix], queue_m_sizes[ix])) for ix in range(5)]
-v_processes = [Thread(target=v_worker, args=(v_queues[ix], v_queue_m_sizes[ix])) for ix in range(5)]
+processes += [Thread(target=v_worker, args=(v_queues[ix], v_queue_m_sizes[ix])) for ix in range(5)]
 
 buffer_thread = Thread(target=buffer, args=(queues, buffer_queue))
 batch_thread = Thread(target=batch_prep, args=(buffer_queue, batch_queue))
@@ -301,6 +301,8 @@ v_batch_thread = Thread(target=batch_prep, args=(v_buffer_queue, v_batch_queue))
 
 processes.append(buffer_thread)
 processes.append(batch_thread)
+processes.append(v_buffer_thread)
+processes.append(v_batch_thread)
 
 [p.start() for p in processes]
 
