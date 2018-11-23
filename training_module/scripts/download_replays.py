@@ -20,7 +20,7 @@ try:
 
     date = ''.join(today)
 
-    #date = '20181015'
+#    date = '20181108'
 
     _outpath = os.path.join(outpath, date)
 
