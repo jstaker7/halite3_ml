@@ -73,7 +73,7 @@ for rp in master_index:
             keep.append(rp)
             break
 
-keep = np.random.shuffle(keep)
+np.random.shuffle(keep) # in place
 
 keep, valid = keep[:len(keep)//2], keep[len(keep)//2:]
 
