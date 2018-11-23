@@ -167,7 +167,7 @@ def build_model(inference=False):
     
     vars = [tf.nn.l2_loss(v) for v in tf.trainable_variables()
                     if 'bias' not in v.name and 'c' == v.name[0]]
-    L2_loss = tf.add_n(vars) * 0.00005
+    L2_loss = tf.add_n(vars) * 0.0000001
     
     loss += L2_loss
     
