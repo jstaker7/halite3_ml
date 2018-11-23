@@ -165,6 +165,12 @@ def build_model(inference=False):
 
     loss = tf.reduce_mean(average_frame_loss) + 0.03*generate_losses
     
+    vars = [tf.nn.l2_loss(v) for v in tf.trainable_variables()
+                    if 'bias' not in v.name and 'c' == v.name[0]]
+    L2_loss = tf.add_n(vars) * 0.00005
+    
+    loss += L2_loss
+    
     update_ops = tf.get_collection(tf.GraphKeys.UPDATE_OPS)
     with tf.control_dependencies(update_ops):
         optimizer = tf.train.AdamOptimizer(learning_rate).minimize(loss)

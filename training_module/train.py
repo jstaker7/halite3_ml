@@ -63,13 +63,14 @@ with gzip.open(os.path.join(replay_root, 'INDEX.pkl'), 'rb') as infile:
     master_index = pickle.load(infile)
 
 PNAME = 'TheDuck314'
+VERSIONS = [30, 31, 33, 34, 35, 36]
 
 keep = []
 for rp in master_index:
     for p in master_index[rp]['players']:
         name, _version = p['name'].split(' v')
         version = int(_version.strip())
-        if PNAME == name and version == 31:
+        if PNAME == name and version in VERSIONS:
             keep.append(rp)
             break
 
@@ -394,7 +395,7 @@ try:
 
             loss, _ = sess.run([loss_node, optimizer_node], feed_dict=feed_dict)
             losses.append(loss)
-            if step % 10000 == 0:
+            if step % 5000 == 0:
                 v_losses = []
                 for _ in range(1000):
                     batch = v_batch_queue.get()
