@@ -18,7 +18,7 @@ from training_module.architecture import build_model
 np.random.seed(8)
 
 RESTORE = True
-RESTORE_WHICH = '2'
+RESTORE_WHICH = '3'
 
 # Given history of frames
 # 1) Predict which player is which

@@ -123,8 +123,8 @@ def build_model(inference=False):
     u_l2_s_4 = tf.layers.batch_normalization(u_l2_s_4, training=is_training, name='bn27')
     u_l2_s_5 = tf.layers.conv2d(u_l2_s_4, 512, 3, activation=tf.nn.relu, padding='same', name='c37')
     u_l2_s_5 = tf.layers.batch_normalization(u_l2_s_5, training=is_training, name='bn28')
-    u_l2_s_6 = tf.layers.conv2d(u_l2_s_5, 512, 3, activation=tf.nn.relu, padding='same', name='c38')
-    u_l2_s_6 = tf.layers.batch_normalization(u_l2_s_6, training=is_training, name='bn29')
+#    u_l2_s_6 = tf.layers.conv2d(u_l2_s_5, 512, 3, activation=tf.nn.relu, padding='same', name='c38')
+#    u_l2_s_6 = tf.layers.batch_normalization(u_l2_s_6, training=is_training, name='bn29')
 
 #    u_l1_a = tf.layers.conv2d_transpose(u_l2_s, 64, 3, 2, activation=tf.nn.relu, padding='same') # 256
 #    u_l1_c = tf.concat([u_l1_a, d_l1_a], -1)
@@ -134,7 +134,7 @@ def build_model(inference=False):
     
     generate_logits = tf.squeeze(generate_logits, [1, 2])
 
-    moves_logits = tf.layers.conv2d(u_l2_s_6, 6, 3, activation=None, padding='same', name='c40')
+    moves_logits = tf.layers.conv2d(u_l2_s_5, 6, 3, activation=None, padding='same', name='c40')
     
 #    m_logits = tf.identity(moves_logits, 'm_logits')
 #    g_logits = tf.identity(generate_logits, 'g_logits')
