@@ -424,9 +424,9 @@ try:
                 if np.mean(v_losses) < best:
                     best = np.mean(v_losses)
                     saver.save(sess, os.path.join(save_dir, 'model.ckpt'))
-                    print("{} {.2f} {.2f} *** new best ***".format(step, np.mean(losses[-1000:]), np.mean(v_losses)))
+                    print("{} {:.2f} {:.2f} *** new best ***".format(step, np.mean(losses[-1000:]), np.mean(v_losses)))
                 else:
-                    print("{} {.2f} {.2f}".format(step, np.mean(losses[-1000:]), np.mean(v_losses)))
+                    print("{} {:.2f} {:.2f}".format(step, np.mean(losses[-1000:]), np.mean(v_losses)))
 
     #        for i in range(100000):
     #            loss, _ = sess.run([loss_node, optimizer_node], feed_dict=feed_dict)
