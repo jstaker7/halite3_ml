@@ -17,7 +17,7 @@ from training_module.architecture import build_model
 
 np.random.seed(8)
 
-RESTORE = True
+RESTORE = False#True
 RESTORE_WHICH = '4'
 
 # Given history of frames
