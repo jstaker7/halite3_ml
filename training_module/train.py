@@ -319,6 +319,8 @@ loss_node = tf.get_collection('loss')[0]
 optimizer_node = tf.get_collection('optimizer')[0]
 is_training = tf.get_collection('is_training')[0]
 
+#with open() # TODO: save out log
+
 saver = tf.train.Saver()
 best = 999
 try:
@@ -397,7 +399,7 @@ try:
             losses.append(loss)
             if step % 5000 == 0:
                 v_losses = []
-                for _ in range(1000):
+                for _ in range(2000):
                     batch = v_batch_queue.get()
                     
                     f_batch, m_batch, g_batch, c_batch, t_batch, s_batch = batch
@@ -418,12 +420,13 @@ try:
 
                     loss = sess.run(loss_node, feed_dict=feed_dict)
                     v_losses.append(loss)
-                    
-                print("{} {} {}".format(step, np.mean(losses[-1000:]), np.mean(v_losses)))
+            
                 if np.mean(v_losses) < best:
                     best = np.mean(v_losses)
-                    print("*** new best ***")
                     saver.save(sess, os.path.join(save_dir, 'model.ckpt'))
+                    print("{} {.2f} {.2f} *** new best ***".format(step, np.mean(losses[-1000:]), np.mean(v_losses)))
+                else:
+                    print("{} {.2f} {.2f}".format(step, np.mean(losses[-1000:]), np.mean(v_losses)))
 
     #        for i in range(100000):
     #            loss, _ = sess.run([loss_node, optimizer_node], feed_dict=feed_dict)
