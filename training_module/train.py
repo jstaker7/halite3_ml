@@ -399,7 +399,7 @@ try:
             losses.append(loss)
             if step % 5000 == 0:
                 v_losses = []
-                for _ in range(2000):
+                for _ in range(3000):
                     batch = v_batch_queue.get()
                     
                     f_batch, m_batch, g_batch, c_batch, t_batch, s_batch = batch
