@@ -40,9 +40,9 @@ def build_model(inference=False):
     d_l2_a_1 = tf.layers.batch_normalization(d_l2_a_1, training=is_training, name='bn1')
 #    d_l2_a_2 = tf.layers.conv2d(d_l2_a_1, 32, 3, activation=tf.nn.relu, padding='same', name='c2')
 #    d_l2_a_2 = tf.layers.batch_normalization(d_l2_a_2, training=is_training, name='bn2')
-    d_l2_a_3 = tf.layers.conv2d(d_l2_a_1, 32, 3, activation=tf.nn.relu, padding='same', name='c3')
-    d_l2_a_3 = tf.layers.batch_normalization(d_l2_a_3, training=is_training, name='bn3')
-    d_l2_p = tf.layers.conv2d(d_l2_a_3, 32, 3, strides=2, activation=tf.nn.relu, padding='same', name='c4') # 64
+#    d_l2_a_3 = tf.layers.conv2d(d_l2_a_1, 32, 3, activation=tf.nn.relu, padding='same', name='c3')
+#    d_l2_a_3 = tf.layers.batch_normalization(d_l2_a_3, training=is_training, name='bn3')
+    d_l2_p = tf.layers.conv2d(d_l2_a_1, 32, 3, strides=2, activation=tf.nn.relu, padding='same', name='c4') # 64
     d_l2_p = tf.layers.batch_normalization(d_l2_p, training=is_training, name='bn4')
 
     d_l3_a = tf.layers.conv2d(d_l2_p, 32, 3, activation=tf.nn.relu, padding='same', name='c5')
