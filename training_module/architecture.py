@@ -70,9 +70,9 @@ def build_model(inference=False):
     d_l7_p = tf.layers.conv2d(d_l7_a, 128, 3, strides=2, activation=tf.nn.relu, padding='same', name='c14') # 2
     d_l7_p = tf.layers.batch_normalization(d_l7_p, training=is_training, name='bn14')
 
-    d_l8_a_1 = tf.layers.conv2d(d_l7_p, 256, 3, activation=tf.nn.relu, padding='same', name='c15')
-    d_l8_a_1 = tf.layers.batch_normalization(d_l8_a_1, training=is_training, name='bn15')
-    d_l8_a_2 = tf.layers.conv2d(d_l8_a_1, 256, 3, activation=tf.nn.relu, padding='same', name='c16')
+#    d_l8_a_1 = tf.layers.conv2d(d_l7_p, 256, 3, activation=tf.nn.relu, padding='same', name='c15')
+#    d_l8_a_1 = tf.layers.batch_normalization(d_l8_a_1, training=is_training, name='bn15')
+    d_l8_a_2 = tf.layers.conv2d(d_l7_p, 256, 3, activation=tf.nn.relu, padding='same', name='c16')
     d_l8_a_2 = tf.layers.batch_normalization(d_l8_a_2, training=is_training, name='bn16')
     d_l8_p = tf.layers.conv2d(d_l8_a_2, 256, 3, strides=2, activation=tf.nn.relu, padding='same', name='c17') # 1
     d_l8_p = tf.layers.batch_normalization(d_l8_p, training=is_training, name='bn17')
@@ -141,6 +141,7 @@ def build_model(inference=False):
 
     tf.add_to_collection('m_logits', moves_logits)
     tf.add_to_collection('g_logits', generate_logits)
+    tf.add_to_collection('latent', latent)
     
     if inference:
         return
