@@ -321,10 +321,13 @@ is_training = tf.get_collection('is_training')[0]
 
 #with open() # TODO: save out log
 
+config = tf.ConfigProto()
+config.gpu_options.allow_growth = True
+
 saver = tf.train.Saver()
 best = 999
 try:
-    with tf.Session() as sess:
+    with tf.Session(config=config) as sess:
         tf.initializers.global_variables().run()
         
         if RESTORE:

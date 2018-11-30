@@ -33,15 +33,9 @@ def build_model(inference=False):
     tl = tf.expand_dims(tl, 1)
     tl = tf.expand_dims(tl, 1)
 
-#    d_l1_a = tf.layers.conv2d(frames, 16, 3, activation=tf.nn.relu, padding='same')
-#    d_l1_p = tf.nn.max_pool(d_l1_a, max_s, max_s, padding='VALID') # 128
-
-    d_l2_a_1 = tf.layers.conv2d(frames, 128, 3, activation=tf.nn.relu, padding='same', name='c1')
+    d_l2_a_1 = tf.layers.conv2d(frames, 128, 3, activation=tf.nn.relu, padding='same', name='c1') # 128
     d_l2_a_1 = tf.layers.batch_normalization(d_l2_a_1, training=is_training, name='bn1')
-#    d_l2_a_2 = tf.layers.conv2d(d_l2_a_1, 32, 3, activation=tf.nn.relu, padding='same', name='c2')
-#    d_l2_a_2 = tf.layers.batch_normalization(d_l2_a_2, training=is_training, name='bn2')
-#    d_l2_a_3 = tf.layers.conv2d(d_l2_a_1, 32, 3, activation=tf.nn.relu, padding='same', name='c3')
-#    d_l2_a_3 = tf.layers.batch_normalization(d_l2_a_3, training=is_training, name='bn3')
+
     d_l2_p = tf.layers.conv2d(d_l2_a_1, 32, 3, strides=2, activation=tf.nn.relu, padding='same', name='c4') # 64
     d_l2_p = tf.layers.batch_normalization(d_l2_p, training=is_training, name='bn4')
 
@@ -70,16 +64,14 @@ def build_model(inference=False):
     d_l7_p = tf.layers.conv2d(d_l7_a, 128, 3, strides=2, activation=tf.nn.relu, padding='same', name='c14') # 2
     d_l7_p = tf.layers.batch_normalization(d_l7_p, training=is_training, name='bn14')
 
-#    d_l8_a_1 = tf.layers.conv2d(d_l7_p, 256, 3, activation=tf.nn.relu, padding='same', name='c15')
-#    d_l8_a_1 = tf.layers.batch_normalization(d_l8_a_1, training=is_training, name='bn15')
     d_l8_a_2 = tf.layers.conv2d(d_l7_p, 256, 3, activation=tf.nn.relu, padding='same', name='c16')
     d_l8_a_2 = tf.layers.batch_normalization(d_l8_a_2, training=is_training, name='bn16')
     d_l8_p = tf.layers.conv2d(d_l8_a_2, 256, 3, strides=2, activation=tf.nn.relu, padding='same', name='c17') # 1
     d_l8_p = tf.layers.batch_normalization(d_l8_p, training=is_training, name='bn17')
 
     final_state = tf.concat([d_l8_p, ca, tl], -1)
-    pre_latent = tf.layers.dense(final_state, 512, activation=tf.nn.relu, name='c18')
-    latent = tf.layers.dense(pre_latent, 512, activation=tf.nn.relu, name='c19')
+    #pre_latent = tf.layers.dense(final_state, 512, activation=tf.nn.relu, name='c18')
+    latent = tf.layers.dense(final_state, 512, activation=tf.nn.relu, name='c19')
 
     u_l8_a = tf.layers.conv2d_transpose(latent, 512, 3, 2, activation=tf.nn.relu, padding='same', name='c20') # 2
     u_l8_c = tf.concat([u_l8_a, d_l8_a_2], -1)
@@ -117,27 +109,12 @@ def build_model(inference=False):
     u_l2_s_1 = tf.layers.batch_normalization(u_l2_s_1, training=is_training, name='bn24')
     u_l2_s_2 = tf.layers.conv2d(u_l2_s_1, 384, 3, activation=tf.nn.relu, padding='same', name='c34')
     u_l2_s_2 = tf.layers.batch_normalization(u_l2_s_2, training=is_training, name='bn25')
-#    u_l2_s_3 = tf.layers.conv2d(u_l2_s_2, 256, 3, activation=tf.nn.relu, padding='same', name='c35')
-#    u_l2_s_3 = tf.layers.batch_normalization(u_l2_s_3, training=is_training, name='bn26')
-#    u_l2_s_4 = tf.layers.conv2d(u_l2_s_3, 384, 3, activation=tf.nn.relu, padding='same', name='c36')
-#    u_l2_s_4 = tf.layers.batch_normalization(u_l2_s_4, training=is_training, name='bn27')
-#    u_l2_s_5 = tf.layers.conv2d(u_l2_s_4, 512, 3, activation=tf.nn.relu, padding='same', name='c37')
-#    u_l2_s_5 = tf.layers.batch_normalization(u_l2_s_5, training=is_training, name='bn28')
-#    u_l2_s_6 = tf.layers.conv2d(u_l2_s_5, 512, 3, activation=tf.nn.relu, padding='same', name='c38')
-#    u_l2_s_6 = tf.layers.batch_normalization(u_l2_s_6, training=is_training, name='bn29')
-
-#    u_l1_a = tf.layers.conv2d_transpose(u_l2_s, 64, 3, 2, activation=tf.nn.relu, padding='same') # 256
-#    u_l1_c = tf.concat([u_l1_a, d_l1_a], -1)
-#    u_l1_s = tf.layers.conv2d(u_l1_c, 63, 3, activation=tf.nn.relu, padding='same')
 
     generate_logits = tf.layers.dense(latent, 1, activation=None, name='c39')
     
     generate_logits = tf.squeeze(generate_logits, [1, 2])
 
     moves_logits = tf.layers.conv2d(u_l2_s_2, 6, 3, activation=None, padding='same', name='c40')
-    
-#    m_logits = tf.identity(moves_logits, 'm_logits')
-#    g_logits = tf.identity(generate_logits, 'g_logits')
 
     tf.add_to_collection('m_logits', moves_logits)
     tf.add_to_collection('g_logits', generate_logits)
