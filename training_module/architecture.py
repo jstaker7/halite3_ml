@@ -70,10 +70,9 @@ def build_model(inference=False):
     d_l8_p = tf.layers.batch_normalization(d_l8_p, training=is_training, name='bn17')
 
     final_state = tf.concat([d_l8_p, ca, tl], -1)
-    #pre_latent = tf.layers.dense(final_state, 512, activation=tf.nn.relu, name='c18')
     latent = tf.layers.dense(final_state, 512, activation=tf.nn.relu, name='c19')
 
-    u_l8_a = tf.layers.conv2d_transpose(latent, 512, 3, 2, activation=tf.nn.relu, padding='same', name='c20') # 2
+    u_l8_a = tf.layers.conv2d_transpose(latent, 256, 3, 2, activation=tf.nn.relu, padding='same', name='c20') # 2
     u_l8_c = tf.concat([u_l8_a, d_l8_a_2], -1)
     u_l8_s = tf.layers.conv2d(u_l8_c, 512, 3, activation=tf.nn.relu, padding='same', name='c21')
     u_l8_s = tf.layers.batch_normalization(u_l8_s, training=is_training, name='bn18')
