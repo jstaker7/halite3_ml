@@ -106,7 +106,7 @@ def build_model(inference=False):
     u_l2_c = tf.concat([u_l2_a, d_l2_a_1], -1)
     u_l2_s_1 = tf.layers.conv2d(u_l2_c, 128, 3, activation=tf.nn.relu, padding='same', name='c33')
     u_l2_s_1 = tf.layers.batch_normalization(u_l2_s_1, training=is_training, name='bn24')
-    u_l2_s_2 = tf.layers.conv2d(u_l2_s_1, 384, 3, activation=tf.nn.relu, padding='same', name='c34')
+    u_l2_s_2 = tf.layers.conv2d(u_l2_s_1, 128, 3, activation=tf.nn.relu, padding='same', name='c34')
     u_l2_s_2 = tf.layers.batch_normalization(u_l2_s_2, training=is_training, name='bn25')
 
     generate_logits = tf.layers.dense(latent, 1, activation=None, name='c39')
