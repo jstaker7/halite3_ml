@@ -167,6 +167,8 @@ with tf.Session(config=config) as sess:
         saver.restore(sess, os.path.join(cd, "model.ckpt"))
     #logging.info("Loaded.")
     
+    # TODO: Also load player model
+    
     frames_node = tf.get_collection('frames')[0]
     can_afford_node = tf.get_collection('can_afford')[0]
     turns_left_node = tf.get_collection('turns_left')[0]
@@ -257,6 +259,8 @@ with tf.Session(config=config) as sess:
                     }
 
         mo, go = sess.run([moves_node, generate_node], feed_dict=feed_dict)
+
+        # TODO: Also get the game state to determine the player to use
 
         go = np.squeeze(go) > 0 # Raw number, 0 is sigmoid()=0.5
         

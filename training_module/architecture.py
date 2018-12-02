@@ -33,7 +33,7 @@ def build_model(inference=False):
     tl = tf.expand_dims(tl, 1)
     tl = tf.expand_dims(tl, 1)
 
-    d_l2_a_1 = tf.layers.conv2d(frames, 128, 3, activation=tf.nn.relu, padding='same', name='c1') # 128
+    d_l2_a_1 = tf.layers.conv2d(frames, 64, 3, activation=tf.nn.relu, padding='same', name='c1') # 128
     d_l2_a_1 = tf.layers.batch_normalization(d_l2_a_1, training=is_training, name='bn1')
 
     d_l2_p = tf.layers.conv2d(d_l2_a_1, 32, 3, strides=2, activation=tf.nn.relu, padding='same', name='c4') # 64
