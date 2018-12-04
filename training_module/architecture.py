@@ -33,7 +33,7 @@ def build_model(inference=False):
     tl = tf.expand_dims(tl, 1)
     tl = tf.expand_dims(tl, 1)
 
-    d_l2_a_1 = tf.layers.conv2d(frames, 64, 3, activation=tf.nn.relu, padding='same', name='c1') # 128
+    d_l2_a_1 = tf.layers.conv2d(frames, 128, 3, activation=tf.nn.relu, padding='same', name='c1') # 128
     d_l2_a_1 = tf.layers.batch_normalization(d_l2_a_1, training=is_training, name='bn1')
 
     d_l2_p = tf.layers.conv2d(d_l2_a_1, 32, 3, strides=2, activation=tf.nn.relu, padding='same', name='c4') # 64
@@ -74,17 +74,17 @@ def build_model(inference=False):
 
     u_l8_a = tf.layers.conv2d_transpose(latent, 256, 3, 2, activation=tf.nn.relu, padding='same', name='c20') # 2
     u_l8_c = tf.concat([u_l8_a, d_l8_a_2], -1)
-    u_l8_s = tf.layers.conv2d(u_l8_c, 512, 3, activation=tf.nn.relu, padding='same', name='c21')
+    u_l8_s = tf.layers.conv2d(u_l8_c, 256, 3, activation=tf.nn.relu, padding='same', name='c21')
     u_l8_s = tf.layers.batch_normalization(u_l8_s, training=is_training, name='bn18')
 
-    u_l7_a = tf.layers.conv2d_transpose(u_l8_s, 512, 3, 2, activation=tf.nn.relu, padding='same', name='c22') # 4
+    u_l7_a = tf.layers.conv2d_transpose(u_l8_s, 128, 3, 2, activation=tf.nn.relu, padding='same', name='c22') # 4
     u_l7_c = tf.concat([u_l7_a, d_l7_a], -1)
-    u_l7_s = tf.layers.conv2d(u_l7_c, 512, 3, activation=tf.nn.relu, padding='same', name='c23')
+    u_l7_s = tf.layers.conv2d(u_l7_c, 128, 3, activation=tf.nn.relu, padding='same', name='c23')
     u_l7_s = tf.layers.batch_normalization(u_l7_s, training=is_training, name='bn19')
 
-    u_l6_a = tf.layers.conv2d_transpose(u_l7_s, 256, 3, 2, activation=tf.nn.relu, padding='same', name='c24') # 8
+    u_l6_a = tf.layers.conv2d_transpose(u_l7_s, 128, 3, 2, activation=tf.nn.relu, padding='same', name='c24') # 8
     u_l6_c = tf.concat([u_l6_a, d_l6_a], -1)
-    u_l6_s = tf.layers.conv2d(u_l6_c, 256, 3, activation=tf.nn.relu, padding='same', name='c25')
+    u_l6_s = tf.layers.conv2d(u_l6_c, 128, 3, activation=tf.nn.relu, padding='same', name='c25')
     u_l6_s = tf.layers.batch_normalization(u_l6_s, training=is_training, name='bn20')
 
     u_l5_a = tf.layers.conv2d_transpose(u_l6_s, 128, 3, 2, activation=tf.nn.relu, padding='same', name='c26') # 16

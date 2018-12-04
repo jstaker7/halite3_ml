@@ -323,7 +323,7 @@ is_training = tf.get_collection('is_training')[0]
 
 #config = tf.ConfigProto()
 #config.gpu_options.allow_growth = True
-gpu_options = tf.GPUOptions(per_process_gpu_memory_fraction=0.05)
+gpu_options = tf.GPUOptions(per_process_gpu_memory_fraction=0.44)
 config=tf.ConfigProto(gpu_options=gpu_options)
 saver = tf.train.Saver()
 best = 999
@@ -427,7 +427,7 @@ try:
             
                 if np.mean(v_losses) < best:
                     best = np.mean(v_losses)
-                    saver.save(sess, os.path.join(save_dir, 'model.ckpt'))
+                    #saver.save(sess, os.path.join(save_dir, 'model.ckpt'))
                     print("{} {:.2f} {:.2f} *** new best ***".format(step, np.mean(losses[-1000:]), np.mean(v_losses)))
                 else:
                     print("{} {:.2f} {:.2f}".format(step, np.mean(losses[-1000:]), np.mean(v_losses)))
