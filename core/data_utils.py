@@ -223,7 +223,7 @@ class Game(object):
         factories[fy, fx] = 1
 
         # normalize some of the arrays
-        production = (self.production - 500.)/500. # Guessing on norm values for now
+        production = (self.production)/1000. # Guessing on norm values for now
         #production = (self.production - 119.)/124.
         
         entities = self.entities.copy()
@@ -239,7 +239,7 @@ class Game(object):
         has_ship[my_ships>0.5] = 1
         
         # Normalize
-        entity_energies = (entities[:, :, :, 0].copy().astype(np.float32) - 500.)/500.
+        entity_energies = (entities[:, :, :, 0].copy().astype(np.float32))/1000.
         entity_energies *= has_ship_mask
 
         has_ship = np.expand_dims(has_ship, -1)
