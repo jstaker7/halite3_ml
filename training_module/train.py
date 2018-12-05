@@ -62,72 +62,23 @@ if not os.path.exists(replay_root):
 with gzip.open(os.path.join(replay_root, 'INDEX.pkl'), 'rb') as infile:
     master_index = pickle.load(infile)
 
-# TODO: fix PNAME in workers
-PLAYERS = [
-            {'pname': 'TheDuck314',
-             'versions': [30, 31, 33, 34, 35, 36],
-             },
-           
-            {'pname': 'teccles',
-             'versions': [96, 97, 98, 99, 100, 101],
-             },
-           
-            {'pname': 'reCurs3',
-             'versions': [113, 114, 115, 117, 120],
-             },
-]
+PNAME = 'TheDuck314'
+VERSIONS = [30, 31, 33, 34, 35, 36]
 
-in_train = set()
-in_valid = set()
+keep = []
+for rp in master_index:
+    for p in master_index[rp]['players']:
+        name, _version = p['name'].split(' v')
+        version = int(_version.strip())
+        if PNAME == name and version in VERSIONS:
+            keep.append(rp)
+            break
 
-def filter_replays(pname, versions, DUCK):
-    keep = []
-    for rp in master_index:
-        for p in master_index[rp]['players']:
-            name, _version = p['name'].split(' v')
-            version = int(_version.strip())
-            if PNAME == name and version in versions:
-                keep.append(rp)
-                break
+np.random.shuffle(keep) # in place
 
-    if DUCK:
-        np.random.shuffle(keep) # in place
+keep, valid = keep[:len(keep)//2], keep[len(keep)//2:]
 
-        keep, valid = keep[:len(keep)//2], keep[len(keep)//2:]
-        is_train |= set(keep)
-        is_valid |= set(valid)
-        return keep, valid
-
-    else:
-        train, valid = [], []
-        new_keep = []
-        for rp in keep:
-            if rp in in_train:
-                train.append(rp)
-            elif rp in in_valid:
-                valid.append(rp)
-            else:
-                new_keep.append(rp)
-
-        _train, _valid = new_keep[:len(new_keep)//2], new_keep[len(new_keep)//2:]
-
-        train += _train
-        valid += _valid
-
-        in_train |= train
-        in_valid |= valid
-
-        return train, valid
-
-for player in PLAYERS:
-    train, valid = filter_replays(player['pname'], player['versions'], if player['pname'] == 'TheDuck314')
-    player['train'] = train
-    player['valid'] = valid
-    print(player['pname'])
-    print(len(train))
-    print(len(valid))
-
-#assert keep, print(len(keep))
+assert keep, print(len(keep))
 
 # Test speed before MP
 #for rp in keep:
@@ -145,8 +96,6 @@ for player in PLAYERS:
 #        continue
 #
 #    print()
-
-# NEXT: Fix workers
 
 
 min_buffer_size = 5000
