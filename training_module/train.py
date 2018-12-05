@@ -62,23 +62,72 @@ if not os.path.exists(replay_root):
 with gzip.open(os.path.join(replay_root, 'INDEX.pkl'), 'rb') as infile:
     master_index = pickle.load(infile)
 
-PNAME = 'TheDuck314'
-VERSIONS = [30, 31, 33, 34, 35, 36]
+# TODO: fix PNAME in workers
+PLAYERS = [
+            {'pname': 'TheDuck314',
+             'versions': [30, 31, 33, 34, 35, 36],
+             },
+           
+#            {'pname': 'teccles',
+#             'versions': [96, 97, 98, 99, 100, 101],
+#             },
+#
+#            {'pname': 'reCurs3',
+#             'versions': [113, 114, 115, 117, 120],
+#             },
+]
 
-keep = []
-for rp in master_index:
-    for p in master_index[rp]['players']:
-        name, _version = p['name'].split(' v')
-        version = int(_version.strip())
-        if PNAME == name and version in VERSIONS:
-            keep.append(rp)
-            break
+in_train = set()
+in_valid = set()
 
-np.random.shuffle(keep) # in place
+def filter_replays(pname, versions, DUCK):
+    keep = []
+    for rp in master_index:
+        for p in master_index[rp]['players']:
+            name, _version = p['name'].split(' v')
+            version = int(_version.strip())
+            if pname == name and version in versions:
+                keep.append(rp)
+                break
 
-keep, valid = keep[:len(keep)//2], keep[len(keep)//2:]
+    if DUCK:
+        np.random.shuffle(keep) # in place
 
-assert keep, print(len(keep))
+        keep, valid = keep[:len(keep)//2], keep[len(keep)//2:]
+        is_train |= set(keep)
+        is_valid |= set(valid)
+        return keep, valid
+
+    else:
+        train, valid = [], []
+        new_keep = []
+        for rp in keep:
+            if rp in in_train:
+                train.append(rp)
+            elif rp in in_valid:
+                valid.append(rp)
+            else:
+                new_keep.append(rp)
+
+        _train, _valid = new_keep[:len(new_keep)//2], new_keep[len(new_keep)//2:]
+
+        train += _train
+        valid += _valid
+
+        in_train |= train
+        in_valid |= valid
+
+        return train, valid
+
+for player in PLAYERS:
+    train, valid = filter_replays(player['pname'], player['versions'], if player['pname'] == 'TheDuck314')
+    player['train'] = train
+    player['valid'] = valid
+    print(player['pname'])
+    print(len(train))
+    print(len(valid))
+
+#assert keep, print(len(keep))
 
 # Test speed before MP
 #for rp in keep:
@@ -96,6 +145,8 @@ assert keep, print(len(keep))
 #        continue
 #
 #    print()
+
+# NEXT: Fix workers
 
 
 min_buffer_size = 5000
@@ -173,13 +224,12 @@ def buffer(raw_queues, buffer_q):
         buffer_q.put((rand_priority, time.time(), pair))
         #time.sleep(1)
 
-
-def worker(queue, size):
+def worker(queue, size, pname, keep):
     np.random.seed(size) # Use size as seed
     # Filter out games that are not the right size
     # Note: Replay naming is not consistent (game id was added later)
     s_keep = [x for x in keep if int(x.split('-')[-2]) == size]
-    print("{0} maps with size {1}x{1}".format(len(s_keep), size))
+    print("{} {0} maps with size {1}x{1}".format(pname, len(s_keep), size))
     #buffer = []
     while True:
         which_game = np.random.choice(s_keep)
@@ -193,7 +243,7 @@ def worker(queue, size):
         except:
             continue
         
-        frames, moves, generate, can_afford, turns_left = game.get_training_frames(pname=PNAME)
+        frames, moves, generate, can_afford, turns_left = game.get_training_frames(pname=pname)
         
         # Avoid GC issues
         frames = copy.deepcopy(frames)
@@ -225,85 +275,35 @@ def worker(queue, size):
 #                queue.put(buffer.pop())
         #queue.put(size)
 
-def v_worker(queue, size):
-    np.random.seed(size) # Use size as seed
-    # Filter out games that are not the right size
-    # Note: Replay naming is not consistent (game id was added later)
-    s_keep = [x for x in valid if int(x.split('-')[-2]) == size]
-    print("{0} maps with size {1}x{1}".format(len(s_keep), size))
-    #buffer = []
-    while True:
-        which_game = np.random.choice(s_keep)
-        path = os.path.join(replay_root, '{}', '{}')
-        day = which_game.replace('ts2018-halite-3-gold-replays_replay-', '').split('-')[0]
-        path = path.format(day, which_game)
+processes = []
+for player in PLAYERS:
 
-        game = Game()
-        try:
-            game.load_replay(path)
-        except:
-            continue
-        
-        frames, moves, generate, can_afford, turns_left = game.get_training_frames(pname=PNAME)
-        
-        # Avoid GC issues
-        frames = copy.deepcopy(frames)
-        moves = copy.deepcopy(moves)
-        generate = copy.deepcopy(generate)
-        can_afford = copy.deepcopy(can_afford)
-        turns_left = copy.deepcopy(turns_left)
-        del game
-        
-#        frames = frames[:25]
-#        moves = moves[:25]
-#        generate = generate[:25]
-#        can_afford = can_afford[:25]
-#        turns_left = turns_left[:25]
+    # 5 queues, 1 for each map size (to improve compute efficiency)
+    queues = [Queue(32) for _ in range(5)]
+    queue_m_sizes = [32, 40, 48, 56, 64]
 
-        for pair in zip(frames, moves, generate, can_afford, turns_left):
-            #buffer.append(pair)
-            queue.put(copy.deepcopy(pair))
+    v_queues = [Queue(32) for _ in range(5)]
+    v_queue_m_sizes = [32, 40, 48, 56, 64]
 
-        del frames
-        del moves
-        del generate
-        del can_afford
-        del turns_left
+    batch_queue = Queue(2)
+    buffer_queue = PriorityQueue(max_buffer_size)
 
-#        if len(buffer) > 10:
-#            shuffle(buffer)
-#            while len(buffer) > 0:
-#                queue.put(buffer.pop())
-        #queue.put(size)
+    v_batch_queue = Queue(2)
+    v_buffer_queue = PriorityQueue(max_buffer_size)
 
+    processes += [Thread(target=worker, args=(queues[ix], queue_m_sizes[ix], player['pname'], player['train'])) for ix in range(5)]
+    processes += [Thread(target=worker, args=(v_queues[ix], v_queue_m_sizes[ix], player['pname'], player['valid'])) for ix in range(5)]
 
-# 5 queues, 1 for each map size (to improve compute efficiency)
-queues = [Queue(32) for _ in range(5)]
-queue_m_sizes = [32, 40, 48, 56, 64]
+    buffer_thread = Thread(target=buffer, args=(queues, buffer_queue))
+    batch_thread = Thread(target=batch_prep, args=(buffer_queue, batch_queue))
 
-v_queues = [Queue(32) for _ in range(5)]
-v_queue_m_sizes = [32, 40, 48, 56, 64]
+    v_buffer_thread = Thread(target=buffer, args=(v_queues, v_buffer_queue))
+    v_batch_thread = Thread(target=batch_prep, args=(v_buffer_queue, v_batch_queue))
 
-batch_queue = Queue(2)
-buffer_queue = PriorityQueue(max_buffer_size)
+    processes += [buffer_thread, batch_thread, v_buffer_thread, v_batch_thread]
 
-v_batch_queue = Queue(2)
-v_buffer_queue = PriorityQueue(max_buffer_size)
-
-#processes = [Process(target=worker, args=(queues[ix], queue_m_sizes[ix])) for ix in range(5)]
-processes = [Thread(target=worker, args=(queues[ix], queue_m_sizes[ix])) for ix in range(5)]
-processes += [Thread(target=v_worker, args=(v_queues[ix], v_queue_m_sizes[ix])) for ix in range(5)]
-
-buffer_thread = Thread(target=buffer, args=(queues, buffer_queue))
-batch_thread = Thread(target=batch_prep, args=(buffer_queue, batch_queue))
-
-v_buffer_thread = Thread(target=buffer, args=(v_queues, v_buffer_queue))
-v_batch_thread = Thread(target=batch_prep, args=(v_buffer_queue, v_batch_queue))
-
-processes.append(buffer_thread)
-processes.append(batch_thread)
-processes.append(v_buffer_thread)
-processes.append(v_batch_thread)
+    player['batch_q'] = batch_queue
+    player['v_batch_q'] = v_batch_queue
 
 [p.start() for p in processes]
 
@@ -345,10 +345,15 @@ try:
         print("Training...")
         losses = []
         for step in range(20000000):
-        
-            batch = batch_queue.get()
+            player_batches = []
+            for player in PLAYERS:
+                batch = player['batch_q'].get()
+                player_batches.append(batch)
             
-            f_batch, m_batch, g_batch, c_batch, t_batch, s_batch = batch
+            if len(players) == 1:
+                f_batch, m_batch, g_batch, c_batch, t_batch, s_batch = batch
+            else:
+                pass # Combine them into a single batch
             
             #f_batch, m_batch, g_batch, c_batch, t_batch, s_batch = data
 
@@ -404,9 +409,16 @@ try:
             if step % 5000 == 0:
                 v_losses = []
                 for _ in range(3000):
-                    batch = v_batch_queue.get()
+                
+                    player_batches = []
+                    for player in PLAYERS:
+                        batch = player['v_batch_q'].get()
+                        player_batches.append(batch)
                     
-                    f_batch, m_batch, g_batch, c_batch, t_batch, s_batch = batch
+                    if len(players) == 1:
+                        f_batch, m_batch, g_batch, c_batch, t_batch, s_batch = batch
+                    else:
+                        pass # Combine them into a single batch
     
                     g_batch = np.expand_dims(g_batch, -1)
                     t_batch = np.expand_dims(t_batch, -1)
@@ -427,7 +439,7 @@ try:
             
                 if np.mean(v_losses) < best:
                     best = np.mean(v_losses)
-                    saver.save(sess, os.path.join(save_dir, 'model.ckpt'))
+                    #saver.save(sess, os.path.join(save_dir, 'model.ckpt'))
                     print("{} {:.2f} {:.2f} *** new best ***".format(step, np.mean(losses[-1000:]), np.mean(v_losses)))
                 else:
                     print("{} {:.2f} {:.2f}".format(step, np.mean(losses[-1000:]), np.mean(v_losses)))
