@@ -2,6 +2,8 @@ import tensorflow as tf
 
 def build_model(inference=False):
 
+    init = tf.variance_scaling_initializer(factor=1.0, mode='FAN_IN')
+
     learning_rate = 0.0006
 
     frames = tf.placeholder(tf.float32, [None, 128, 128, 5])
@@ -33,80 +35,80 @@ def build_model(inference=False):
     tl = tf.expand_dims(tl, 1)
     tl = tf.expand_dims(tl, 1)
 
-    d_l2_a_1 = tf.layers.conv2d(frames, 64, 3, activation=tf.nn.relu, padding='same', name='c1') # 128
+    d_l2_a_1 = tf.layers.conv2d(frames, 64, 3, activation=tf.nn.selu, padding='same', name='c1', kernel_initializer=init) # 128
     #d_l2_a_1 = tf.layers.batch_normalization(d_l2_a_1, training=is_training, name='bn1')
 
-    d_l2_p = tf.layers.conv2d(d_l2_a_1, 32, 3, strides=2, activation=tf.nn.relu, padding='same', name='c4') # 64
+    d_l2_p = tf.layers.conv2d(d_l2_a_1, 32, 3, strides=2, activation=tf.nn.selu, padding='same', name='c4', kernel_initializer=init) # 64
     #d_l2_p = tf.layers.batch_normalization(d_l2_p, training=is_training, name='bn4')
 
-    d_l3_a = tf.layers.conv2d(d_l2_p, 32, 3, activation=tf.nn.relu, padding='same', name='c5')
+    d_l3_a = tf.layers.conv2d(d_l2_p, 32, 3, activation=tf.nn.selu, padding='same', name='c5', kernel_initializer=init)
     #d_l3_a = tf.layers.batch_normalization(d_l3_a, training=is_training, name='bn5')
-    d_l3_p = tf.layers.conv2d(d_l3_a, 32, 3, strides=2, activation=tf.nn.relu, padding='same', name='c6') # 32
+    d_l3_p = tf.layers.conv2d(d_l3_a, 32, 3, strides=2, activation=tf.nn.selu, padding='same', name='c6', kernel_initializer=init) # 32
     #d_l3_p = tf.layers.batch_normalization(d_l3_p, training=is_training, name='bn6')
 
-    d_l4_a = tf.layers.conv2d(d_l3_p, 32, 3, activation=tf.nn.relu, padding='same', name='c7')
+    d_l4_a = tf.layers.conv2d(d_l3_p, 32, 3, activation=tf.nn.selu, padding='same', name='c7', kernel_initializer=init)
     #d_l4_a = tf.layers.batch_normalization(d_l4_a, training=is_training, name='bn7')
-    d_l4_p = tf.layers.conv2d(d_l4_a, 32, 3, strides=2, activation=tf.nn.relu, padding='same', name='c8') # 16
+    d_l4_p = tf.layers.conv2d(d_l4_a, 32, 3, strides=2, activation=tf.nn.selu, padding='same', name='c8', kernel_initializer=init) # 16
     #d_l4_p = tf.layers.batch_normalization(d_l4_p, training=is_training, name='bn8')
 
-    d_l5_a = tf.layers.conv2d(d_l4_p, 32, 3, activation=tf.nn.relu, padding='same', name='c9')
+    d_l5_a = tf.layers.conv2d(d_l4_p, 32, 3, activation=tf.nn.selu, padding='same', name='c9', kernel_initializer=init)
     #d_l5_a = tf.layers.batch_normalization(d_l5_a, training=is_training, name='bn9')
-    d_l5_p = tf.layers.conv2d(d_l5_a, 32, 3, strides=2, activation=tf.nn.relu, padding='same', name='c10') # 8
+    d_l5_p = tf.layers.conv2d(d_l5_a, 32, 3, strides=2, activation=tf.nn.selu, padding='same', name='c10', kernel_initializer=init) # 8
     #d_l5_p = tf.layers.batch_normalization(d_l5_p, training=is_training, name='bn10')
 
-    d_l6_a = tf.layers.conv2d(d_l5_p, 64, 3, activation=tf.nn.relu, padding='same', name='c11')
+    d_l6_a = tf.layers.conv2d(d_l5_p, 64, 3, activation=tf.nn.selu, padding='same', name='c11', kernel_initializer=init)
     #d_l6_a = tf.layers.batch_normalization(d_l6_a, training=is_training, name='bn11')
-    d_l6_p = tf.layers.conv2d(d_l6_a, 64, 3, strides=2, activation=tf.nn.relu, padding='same', name='c12') # 4
+    d_l6_p = tf.layers.conv2d(d_l6_a, 64, 3, strides=2, activation=tf.nn.selu, padding='same', name='c12', kernel_initializer=init) # 4
     #d_l6_p = tf.layers.batch_normalization(d_l6_p, training=is_training, name='bn12')
 
-    d_l7_a = tf.layers.conv2d(d_l6_p, 128, 3, activation=tf.nn.relu, padding='same', name='c13')
+    d_l7_a = tf.layers.conv2d(d_l6_p, 128, 3, activation=tf.nn.selu, padding='same', name='c13', kernel_initializer=init)
     #d_l7_a = tf.layers.batch_normalization(d_l7_a, training=is_training, name='bn13')
-    d_l7_p = tf.layers.conv2d(d_l7_a, 128, 3, strides=2, activation=tf.nn.relu, padding='same', name='c14') # 2
+    d_l7_p = tf.layers.conv2d(d_l7_a, 128, 3, strides=2, activation=tf.nn.selu, padding='same', name='c14', kernel_initializer=init) # 2
     #d_l7_p = tf.layers.batch_normalization(d_l7_p, training=is_training, name='bn14')
 
-    d_l8_a_2 = tf.layers.conv2d(d_l7_p, 128, 3, activation=tf.nn.relu, padding='same', name='c16')
+    d_l8_a_2 = tf.layers.conv2d(d_l7_p, 128, 3, activation=tf.nn.selu, padding='same', name='c16', kernel_initializer=init)
     #d_l8_a_2 = tf.layers.batch_normalization(d_l8_a_2, training=is_training, name='bn16')
-    d_l8_p = tf.layers.conv2d(d_l8_a_2, 128, 3, strides=2, activation=tf.nn.relu, padding='same', name='c17') # 1
+    d_l8_p = tf.layers.conv2d(d_l8_a_2, 128, 3, strides=2, activation=tf.nn.selu, padding='same', name='c17', kernel_initializer=init) # 1
     #d_l8_p = tf.layers.batch_normalization(d_l8_p, training=is_training, name='bn17')
 
     final_state = tf.concat([d_l8_p, ca, tl], -1)
-    latent = tf.layers.dense(final_state, 256, activation=tf.nn.relu, name='c19')
+    latent = tf.layers.dense(final_state, 256, activation=tf.nn.selu, name='c19', kernel_initializer=init)
 
-    u_l8_a = tf.layers.conv2d_transpose(latent, 128, 3, 2, activation=tf.nn.relu, padding='same', name='c20') # 2
+    u_l8_a = tf.layers.conv2d_transpose(latent, 128, 3, 2, activation=tf.nn.selu, padding='same', name='c20', kernel_initializer=init) # 2
     u_l8_c = tf.concat([u_l8_a, d_l8_a_2], -1)
-    u_l8_s = tf.layers.conv2d(u_l8_c, 128, 3, activation=tf.nn.relu, padding='same', name='c21')
+    u_l8_s = tf.layers.conv2d(u_l8_c, 128, 3, activation=tf.nn.selu, padding='same', name='c21', kernel_initializer=init)
     #u_l8_s = tf.layers.batch_normalization(u_l8_s, training=is_training, name='bn18')
 
-    u_l7_a = tf.layers.conv2d_transpose(u_l8_s, 128, 3, 2, activation=tf.nn.relu, padding='same', name='c22') # 4
+    u_l7_a = tf.layers.conv2d_transpose(u_l8_s, 128, 3, 2, activation=tf.nn.selu, padding='same', name='c22', kernel_initializer=init) # 4
     u_l7_c = tf.concat([u_l7_a, d_l7_a], -1)
-    u_l7_s = tf.layers.conv2d(u_l7_c, 128, 3, activation=tf.nn.relu, padding='same', name='c23')
+    u_l7_s = tf.layers.conv2d(u_l7_c, 128, 3, activation=tf.nn.selu, padding='same', name='c23', kernel_initializer=init)
     #u_l7_s = tf.layers.batch_normalization(u_l7_s, training=is_training, name='bn19')
 
-    u_l6_a = tf.layers.conv2d_transpose(u_l7_s, 64, 3, 2, activation=tf.nn.relu, padding='same', name='c24') # 8
+    u_l6_a = tf.layers.conv2d_transpose(u_l7_s, 64, 3, 2, activation=tf.nn.selu, padding='same', name='c24', kernel_initializer=init) # 8
     u_l6_c = tf.concat([u_l6_a, d_l6_a], -1)
-    u_l6_s = tf.layers.conv2d(u_l6_c, 64, 3, activation=tf.nn.relu, padding='same', name='c25')
+    u_l6_s = tf.layers.conv2d(u_l6_c, 64, 3, activation=tf.nn.selu, padding='same', name='c25', kernel_initializer=init)
     #u_l6_s = tf.layers.batch_normalization(u_l6_s, training=is_training, name='bn20')
 
-    u_l5_a = tf.layers.conv2d_transpose(u_l6_s, 64, 3, 2, activation=tf.nn.relu, padding='same', name='c26') # 16
+    u_l5_a = tf.layers.conv2d_transpose(u_l6_s, 64, 3, 2, activation=tf.nn.selu, padding='same', name='c26', kernel_initializer=init) # 16
     u_l5_c = tf.concat([u_l5_a, d_l5_a], -1)
-    u_l5_s = tf.layers.conv2d(u_l5_c, 64, 3, activation=tf.nn.relu, padding='same', name='c27')
+    u_l5_s = tf.layers.conv2d(u_l5_c, 64, 3, activation=tf.nn.selu, padding='same', name='c27', kernel_initializer=init)
     #u_l5_s = tf.layers.batch_normalization(u_l5_s, training=is_training, name='bn21')
 
-    u_l4_a = tf.layers.conv2d_transpose(u_l5_s, 64, 3, 2, activation=tf.nn.relu, padding='same', name='c28') # 32
+    u_l4_a = tf.layers.conv2d_transpose(u_l5_s, 64, 3, 2, activation=tf.nn.selu, padding='same', name='c28', kernel_initializer=init) # 32
     u_l4_c = tf.concat([u_l4_a, d_l4_a], -1)
-    u_l4_s = tf.layers.conv2d(u_l4_c, 64, 3, activation=tf.nn.relu, padding='same', name='c29')
+    u_l4_s = tf.layers.conv2d(u_l4_c, 64, 3, activation=tf.nn.selu, padding='same', name='c29', kernel_initializer=init)
     #u_l4_s = tf.layers.batch_normalization(u_l4_s, training=is_training, name='bn22')
 
-    u_l3_a = tf.layers.conv2d_transpose(u_l4_s, 64, 3, 2, activation=tf.nn.relu, padding='same', name='30') # 64
+    u_l3_a = tf.layers.conv2d_transpose(u_l4_s, 64, 3, 2, activation=tf.nn.selu, padding='same', name='30', kernel_initializer=init) # 64
     u_l3_c = tf.concat([u_l3_a, d_l3_a], -1)
-    u_l3_s = tf.layers.conv2d(u_l3_c, 64, 3, activation=tf.nn.relu, padding='same', name='c31')
+    u_l3_s = tf.layers.conv2d(u_l3_c, 64, 3, activation=tf.nn.selu, padding='same', name='c31', kernel_initializer=init)
     #u_l3_s = tf.layers.batch_normalization(u_l3_s, training=is_training, name='bn23')
 
-    u_l2_a = tf.layers.conv2d_transpose(u_l3_s, 64, 3, 2, activation=tf.nn.relu, padding='same', name='c32') # 128
+    u_l2_a = tf.layers.conv2d_transpose(u_l3_s, 64, 3, 2, activation=tf.nn.selu, padding='same', name='c32', kernel_initializer=init) # 128
     u_l2_c = tf.concat([u_l2_a, d_l2_a_1], -1)
-    u_l2_s_1 = tf.layers.conv2d(u_l2_c, 128, 3, activation=tf.nn.relu, padding='same', name='c33')
+    u_l2_s_1 = tf.layers.conv2d(u_l2_c, 128, 3, activation=tf.nn.selu, padding='same', name='c33', kernel_initializer=init)
     #u_l2_s_1 = tf.layers.batch_normalization(u_l2_s_1, training=is_training, name='bn24')
-    u_l2_s_2 = tf.layers.conv2d(u_l2_s_1, 128, 3, activation=tf.nn.relu, padding='same', name='c34')
+    u_l2_s_2 = tf.layers.conv2d(u_l2_s_1, 128, 3, activation=tf.nn.selu, padding='same', name='c34', kernel_initializer=init)
     #u_l2_s_2 = tf.layers.batch_normalization(u_l2_s_2, training=is_training, name='bn25')
 
     generate_logits = tf.layers.dense(latent, 1, activation=None, name='c39')
