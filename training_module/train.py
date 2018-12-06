@@ -62,19 +62,18 @@ if not os.path.exists(replay_root):
 with gzip.open(os.path.join(replay_root, 'INDEX.pkl'), 'rb') as infile:
     master_index = pickle.load(infile)
 
-# TODO: fix PNAME in workers
 PLAYERS = [
             {'pname': 'TheDuck314',
              'versions': [30, 31, 33, 34, 35, 36],
              },
            
-#            {'pname': 'teccles',
-#             'versions': [96, 97, 98, 99, 100, 101],
-#             },
-#
-#            {'pname': 'reCurs3',
-#             'versions': [113, 114, 115, 117, 120],
-#             },
+            {'pname': 'teccles',
+             'versions': [96, 97, 98, 99, 100, 101],
+             },
+
+            {'pname': 'reCurs3',
+             'versions': [113, 114, 115, 117, 120],
+             },
 ]
 
 in_train = set()
@@ -355,7 +354,16 @@ try:
             if len(PLAYERS) == 1:
                 f_batch, m_batch, g_batch, c_batch, t_batch, s_batch = batch
             else:
-                pass # Combine them into a single batch
+                batch = [np.conatenate(x, 0) for x in zip(batch)]
+                f_batch, m_batch, g_batch, c_batch, t_batch, s_batch = batch
+            
+            print(f_batch.shape)
+            print(m_batch.shape)
+            print(g_batch.shape)
+            print(c_batch.shape)
+            print(t_batch.shape)
+            print(s_batch.shape)
+            sfsf
             
             #f_batch, m_batch, g_batch, c_batch, t_batch, s_batch = data
 
