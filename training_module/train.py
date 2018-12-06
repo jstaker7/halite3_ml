@@ -81,6 +81,8 @@ in_train = set()
 in_valid = set()
 
 def filter_replays(pname, versions, DUCK):
+    global in_train
+    global in_valid
     keep = []
     for rp in master_index:
         for p in master_index[rp]['players']:
@@ -94,8 +96,8 @@ def filter_replays(pname, versions, DUCK):
         np.random.shuffle(keep) # in place
 
         keep, valid = keep[:len(keep)//2], keep[len(keep)//2:]
-        is_train |= set(keep)
-        is_valid |= set(valid)
+        in_train |= set(keep)
+        in_valid |= set(valid)
         return keep, valid
 
     else:
@@ -120,7 +122,7 @@ def filter_replays(pname, versions, DUCK):
         return train, valid
 
 for player in PLAYERS:
-    train, valid = filter_replays(player['pname'], player['versions'], if player['pname'] == 'TheDuck314')
+    train, valid = filter_replays(player['pname'], player['versions'], player['pname'] == 'TheDuck314')
     player['train'] = train
     player['valid'] = valid
     print(player['pname'])
@@ -229,7 +231,7 @@ def worker(queue, size, pname, keep):
     # Filter out games that are not the right size
     # Note: Replay naming is not consistent (game id was added later)
     s_keep = [x for x in keep if int(x.split('-')[-2]) == size]
-    print("{} {0} maps with size {1}x{1}".format(pname, len(s_keep), size))
+    print("{0} {1} maps with size {2}x{2}".format(pname, len(s_keep), size))
     #buffer = []
     while True:
         which_game = np.random.choice(s_keep)
@@ -350,7 +352,7 @@ try:
                 batch = player['batch_q'].get()
                 player_batches.append(batch)
             
-            if len(players) == 1:
+            if len(PLAYERS) == 1:
                 f_batch, m_batch, g_batch, c_batch, t_batch, s_batch = batch
             else:
                 pass # Combine them into a single batch
@@ -415,7 +417,7 @@ try:
                         batch = player['v_batch_q'].get()
                         player_batches.append(batch)
                     
-                    if len(players) == 1:
+                    if len(PLAYERS) == 1:
                         f_batch, m_batch, g_batch, c_batch, t_batch, s_batch = batch
                     else:
                         pass # Combine them into a single batch
