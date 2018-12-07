@@ -1,6 +1,6 @@
 import tensorflow as tf
 
-def build_model(inference=False):
+def build_model(inference=False, num_players=1):
 
     learning_rate = 0.0006
 
@@ -108,19 +108,40 @@ def build_model(inference=False):
     u_l2_s_1 = tf.layers.batch_normalization(u_l2_s_1, training=is_training, name='bn24')
     u_l2_s_2 = tf.layers.conv2d(u_l2_s_1, 128, 3, activation=tf.nn.relu, padding='same', name='c34')
     u_l2_s_2 = tf.layers.batch_normalization(u_l2_s_2, training=is_training, name='bn25')
-
-    generate_logits = tf.layers.dense(latent, 1, activation=None, name='c39')
     
-    generate_logits = tf.squeeze(generate_logits, [1, 2])
+    player_generate_logits = []
+    player_move_logits = []
+    for i in range(num_players):
 
-    moves_logits = tf.layers.conv2d(u_l2_s_2, 6, 3, activation=None, padding='same', name='c40')
+        gen_latent = tf.layers.dense(latent, 64, activation=tf.nn.relu, name='c39_{}'.format(i))
+        generate_logits = tf.layers.dense(gen_latent, 1, activation=None, name='c40_{}'.format(i))
+        generate_logits = tf.squeeze(generate_logits, [1, 2])
 
-    tf.add_to_collection('m_logits', moves_logits)
-    tf.add_to_collection('g_logits', generate_logits)
+        moves_latent = tf.layers.conv2d(u_l2_s_2, 64, 3, activation=tf.nn.relu, padding='same', name='c41_{}'.format(i)) # Try 1 kernel
+        moves_logits = tf.layers.conv2d(moves_latent, 6, 3, activation=None, padding='same', name='c42_{}'.format(i)) # Try 1 kernel
+    
+        player_generate_logits.append(generate_logits)
+        player_move_logits.append(moves_logits)
+
+    tf.add_to_collection('m_logits', tf.stack(player_move_logits))
+    tf.add_to_collection('g_logits', tf.stack(player_generate_logits))
     tf.add_to_collection('latent', latent)
     
     if inference:
         return
+
+    # TODO: Can be improved with gather_nd
+    moves_logits = [tf.split(x, num_players) for x in player_move_logits]
+    generate_logits = [tf.split(x, num_players) for x in player_generate_logits]
+
+    moves_logits = [x[i] for x, i in zip(moves_logits, range(num_players))]
+    generate_logits = [x[i] for x, i in zip(generate_logits, range(num_players))]
+
+    moves_logits = tf.concat(moves_logits, 0)
+    generate_logits = tf.concat(generate_logits, 0)
+
+    print(generate_logits.get_shape())
+    print(moves_logits.get_shape())
 
     losses = tf.nn.softmax_cross_entropy_with_logits_v2(labels=moves,
                                                 logits=moves_logits,

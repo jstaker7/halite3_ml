@@ -68,7 +68,7 @@ PLAYERS = [
              },
            
             {'pname': 'teccles',
-             'versions': [96, 97, 98, 99, 100, 101],
+             'versions': [96, 97, 98, 99, 100, 101, 102],
              },
 
             {'pname': 'reCurs3',
@@ -115,8 +115,8 @@ def filter_replays(pname, versions, DUCK):
         train += _train
         valid += _valid
 
-        in_train |= train
-        in_valid |= valid
+        in_train |= set(train)
+        in_valid |= set(valid)
 
         return train, valid
 
