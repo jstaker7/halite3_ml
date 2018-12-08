@@ -64,11 +64,11 @@ with gzip.open(os.path.join(replay_root, 'INDEX.pkl'), 'rb') as infile:
 
 PLAYERS = [
             {'pname': 'TheDuck314',
-             'versions': [30, 31, 33, 34, 35, 36],
+             'versions': [30, 31, 33, 34, 35, 36], # 39, 40, 41, 42, 43, 44
              },
            
             {'pname': 'teccles',
-             'versions': [96, 97, 98, 99, 100, 101, 102],
+             'versions': [96, 97, 98, 99, 100, 101, 102, 103],
              },
 
             {'pname': 'reCurs3',
@@ -354,7 +354,7 @@ try:
             if len(PLAYERS) == 1:
                 f_batch, m_batch, g_batch, c_batch, t_batch, s_batch = batch
             else:
-                batch = [np.conatenate(x, 0) for x in zip(batch)]
+                batch = [np.concatenate(x, 0) for x in zip(batch)]
                 f_batch, m_batch, g_batch, c_batch, t_batch, s_batch = batch
             
             print(f_batch.shape)

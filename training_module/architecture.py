@@ -140,9 +140,6 @@ def build_model(inference=False, num_players=1):
     moves_logits = tf.concat(moves_logits, 0)
     generate_logits = tf.concat(generate_logits, 0)
 
-    print(generate_logits.get_shape())
-    print(moves_logits.get_shape())
-
     losses = tf.nn.softmax_cross_entropy_with_logits_v2(labels=moves,
                                                 logits=moves_logits,
                                                 dim=-1)
