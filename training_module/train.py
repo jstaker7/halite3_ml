@@ -317,6 +317,7 @@ my_ships_node = tf.get_collection('my_ships')[0]
 moves_node = tf.get_collection('moves')[0]
 generate_node = tf.get_collection('generate')[0]
 loss_node = tf.get_collection('loss')[0]
+sanity_loss_node = tf.get_collection('sanity_loss')[0]
 optimizer_node = tf.get_collection('optimizer')[0]
 is_training = tf.get_collection('is_training')[0]
 
@@ -410,6 +411,7 @@ try:
             losses.append(loss)
             if step % 5000 == 0:
                 v_losses = []
+                sanity_v_losses = []
                 for _ in range(3000):
                 
                     player_batches = []
@@ -420,7 +422,8 @@ try:
                     if len(PLAYERS) == 1:
                         f_batch, m_batch, g_batch, c_batch, t_batch, s_batch = batch
                     else:
-                        pass # Combine them into a single batch
+                        batch = [np.concatenate(x, 0) for x in zip(*player_batches)]
+                        f_batch, m_batch, g_batch, c_batch, t_batch, s_batch = batch
     
                     g_batch = np.expand_dims(g_batch, -1)
                     t_batch = np.expand_dims(t_batch, -1)
@@ -436,9 +439,11 @@ try:
                                  is_training: False
                                 }
 
-                    loss = sess.run(loss_node, feed_dict=feed_dict)
+                    loss, sanity_loss = sess.run([loss_node, sanity_loss_node], feed_dict=feed_dict)
                     v_losses.append(loss)
+                    sanity_v_losses.append(sanity_loss)
             
+                print(np.mean(sanity_v_losses))
                 if np.mean(v_losses) < best:
                     best = np.mean(v_losses)
                     #saver.save(sess, os.path.join(save_dir, 'model.ckpt'))

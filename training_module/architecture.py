@@ -155,10 +155,15 @@ def build_model(inference=False, num_players=1):
     average_frame_loss = frame_loss / tf.maximum(ships_per_frame, 1e-13) # First frames have no ship
 
     generate_losses = tf.nn.sigmoid_cross_entropy_with_logits(labels=generate, logits=generate_logits)
+
+    sanity_gen_loss = tf.reduce_mean(tf.split(generate_losses, 3)[0])
+    sanity_average_frame_loss = tf.reduce_mean(tf.split(average_frame_loss, 3)[0])
     
     generate_losses = tf.reduce_mean(generate_losses) # TODO: do I need to add to frames before averaging?
 
     loss = tf.reduce_mean(average_frame_loss) + 0.03*generate_losses
+
+    sanity_loss = sanity_average_frame_loss + 0.03*sanity_gen_loss
     
     vars = [tf.nn.l2_loss(v) for v in tf.trainable_variables()
                     if 'bias' not in v.name and 'c' == v.name[0]]
@@ -171,6 +176,7 @@ def build_model(inference=False, num_players=1):
         optimizer = tf.train.AdamOptimizer(learning_rate).minimize(loss)
 
     tf.add_to_collection('loss', loss)
+    tf.add_to_collection('sanity_loss', sanity_loss)
     tf.add_to_collection('optimizer', optimizer)
 
     return
