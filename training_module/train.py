@@ -354,16 +354,8 @@ try:
             if len(PLAYERS) == 1:
                 f_batch, m_batch, g_batch, c_batch, t_batch, s_batch = batch
             else:
-                batch = [np.concatenate(x, 0) for x in zip(player_batches)]
+                batch = [np.concatenate(x, 0) for x in zip(*player_batches)]
                 f_batch, m_batch, g_batch, c_batch, t_batch, s_batch = batch
-            
-            print(f_batch.shape)
-            print(m_batch.shape)
-            print(g_batch.shape)
-            print(c_batch.shape)
-            print(t_batch.shape)
-            print(s_batch.shape)
-            sfsf
             
             #f_batch, m_batch, g_batch, c_batch, t_batch, s_batch = data
 
