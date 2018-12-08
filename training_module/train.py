@@ -324,7 +324,7 @@ is_training = tf.get_collection('is_training')[0]
 
 #config = tf.ConfigProto()
 #config.gpu_options.allow_growth = True
-gpu_options = tf.GPUOptions(per_process_gpu_memory_fraction=0.44)
+gpu_options = tf.GPUOptions(per_process_gpu_memory_fraction=0.90)
 config=tf.ConfigProto(gpu_options=gpu_options)
 saver = tf.train.Saver()
 best = 999
@@ -354,7 +354,7 @@ try:
             if len(PLAYERS) == 1:
                 f_batch, m_batch, g_batch, c_batch, t_batch, s_batch = batch
             else:
-                batch = [np.concatenate(x, 0) for x in zip(batch)]
+                batch = [np.concatenate(x, 0) for x in zip(player_batches)]
                 f_batch, m_batch, g_batch, c_batch, t_batch, s_batch = batch
             
             print(f_batch.shape)
