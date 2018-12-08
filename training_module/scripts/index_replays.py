@@ -2,7 +2,7 @@ try:
     import os
     import gzip
     import pickle
-
+    import random
     from core.data_utils import Game
 
     path = '/Users/Peace/Desktop/replays'
@@ -11,9 +11,12 @@ try:
         path = '/home/staker/Projects/halite/replays'
 
     index = {}
-
+    import numpy as np
+    days = list(os.listdir(path))
+    np.random.shuffle(days)
     # Index the days
-    for day in os.listdir(path):
+    for day in days:
+        print(day)
         if day[0] == '.' or day == 'INDEX.pkl':
             continue
         day_dir = os.path.join(path, day)
@@ -26,6 +29,7 @@ try:
         day_index = {}
         
         for r_name in os.listdir(day_dir):
+            #print(r_name)
             if r_name[0] == '.':
                 continue
             rp = os.path.join(day_dir, r_name)
