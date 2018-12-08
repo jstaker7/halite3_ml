@@ -84,6 +84,8 @@ class Game(object):
             raw_replay = zstd.loads(infile.read()).decode()
         replay = json.loads(raw_replay)
         
+        self.path = path
+        
         self.replay = replay
     
         meta_keys = ['ENGINE_VERSION', 'GAME_CONSTANTS', 'REPLAY_FILE_VERSION',
@@ -213,6 +215,10 @@ class Game(object):
                     
         assert pid is not None, "Error: player not found in replay"
         
+        num_p = int(self.meta_data['number_of_players'])
+        if pid >= num_p:
+            print(self.path)
+        
         map_shape = self.production.shape[1], self.production.shape[2]
         factories = np.zeros((*map_shape, 1), dtype=np.float32)
         for fx, fy in self.factories:
@@ -227,8 +233,10 @@ class Game(object):
         #production = (self.production - 119.)/124.
         
         entities = self.entities.copy()
-        
-        my_ships = entities[:, :, :, 2+pid].copy()
+        try:
+            my_ships = entities[:, :, :, 2+pid].copy()
+        except:
+            print(self.path)
 
         has_ship = np.sum(entities[:, :, :, 2:].copy().astype(np.float32), -1)
         
