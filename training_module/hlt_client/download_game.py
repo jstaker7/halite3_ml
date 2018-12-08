@@ -109,12 +109,14 @@ class GameDownloader:
         game_id = self._parse_id_from_url(url)
         try:
             #print("downloading {}".format(url))
+            binary = requests.get(url + _MEDIA_DOWNLOAD_OPTION).content
             with open(os.path.join(self.destination, game_id), 'wb') as outfile:
-                binary = requests.get(url + _MEDIA_DOWNLOAD_OPTION).content
+                #binary = requests.get(url + _MEDIA_DOWNLOAD_OPTION).content
                 outfile.write(binary)
-        except Exception:
-            raise IOError("Could not write file {} to {}".format(game_id, self.destination))
-
+        #except Exception:
+        #    raise IOError("Could not write file {} to {}".format(game_id, self.destination))
+        except:
+             print("Could not write file {} to {}".format(game_id, self.destination))
     def get_objects(self):
         """
         Download all desired replays in parallel threads (up to the number of cores the machines has)

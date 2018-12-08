@@ -21,14 +21,15 @@ try:
     date = ''.join(today)
 
 #    date = '20181108'
+    for date in [date]:
 
-    _outpath = os.path.join(outpath, date)
+      _outpath = os.path.join(outpath, date)
 
-    os.mkdir(_outpath)
+      os.mkdir(_outpath)
 
-    download(_outpath, date, False)
+      download(_outpath, date, False)
 
-    print(date)
+      print(date)
 
     #for replay_name in os.listdir(outpath):
     #    path = os.path.join(outpath, replay_name)
