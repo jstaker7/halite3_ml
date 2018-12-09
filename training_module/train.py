@@ -471,7 +471,7 @@ try:
                 
                 player_print = " ".join(["{:.2f}/{:.2f}/{:.3f}".format(x,y,z) for x,y,z in zip(player_average_frame_losses, player_gen_losses, player_total_losses)])
                 
-                print_line = "{} T: {:.3f} {:.3f} V: ".format(step, np.mean(losses[-1000:]), np.mean(reg_losses[-1000:])) + player_print
+                print_line = "{} T: {:.3f} {:.6f} V: ".format(step, np.mean(losses[-1000:]), np.mean(reg_losses[-1000:])) + player_print
             
                 if np.sum(np.less(player_total_losses, best)) == len(PLAYERS): # All players must have improved
                     best = player_total_losses
