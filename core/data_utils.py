@@ -146,7 +146,7 @@ class Game(object):
 
     def load_moves(self, replay):
         map_size = self.meta_data['GAME_CONSTANTS']['DEFAULT_MAP_HEIGHT'] # Assuming square
-        num_players = len(replay['full_frames'][1]['moves'])
+        num_players = int(self.meta_data['number_of_players'])
 
         valid_moves = ['o', 'n', 'e', 's', 'w', 'c']
         moves = []
@@ -179,7 +179,7 @@ class Game(object):
     def load_entities(self, replay):
         
         map_size = self.meta_data['GAME_CONSTANTS']['DEFAULT_MAP_HEIGHT'] # Assuming square
-        num_players = len(replay['full_frames'][1]['moves']) #meta_data['number_of_players']
+        num_players = int(self.meta_data['number_of_players'])
         num_features = 2
         entities = []
         for ix, frame in enumerate(replay['full_frames'][1:-1]): # No enties on first frame (last doesn't matter)
@@ -188,7 +188,7 @@ class Game(object):
                 for ent in frame['entities'][str(pid)]:
                     ent = frame['entities'][str(pid)][ent]
                     frame_entities[ent['y'], ent['x'], 0] = ent['energy']
-                    frame_entities[ent['y'], ent['x'], 1] = int(ent['is_inspired'])
+                    frame_entities[ent['y'], ent['x'], 1] = int(ent['is_inspired']) # Not used
                     frame_entities[ent['y'], ent['x'], pid+num_features] = 1
             entities.append(frame_entities)
 
