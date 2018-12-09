@@ -457,31 +457,19 @@ try:
                     if step == 0 and vstep == 5:
                         break
             
-                print(np.array(player_gen_losses).shape)
-                print(np.array(player_average_frame_losses).shape)
-                print(np.array(player_total_losses).shape)
-            
                 player_gen_losses = np.stack(player_gen_losses, 1)
                 player_average_frame_losses = np.stack(player_average_frame_losses, 1)
                 player_total_losses = np.stack(player_total_losses, 1)
-                
-                print(player_gen_losses.shape)
-                print(player_average_frame_losses.shape)
-                print(player_total_losses.shape)
                 
                 player_gen_losses = np.mean(player_gen_losses, 1)
                 player_average_frame_losses = np.mean(player_average_frame_losses, 1)
                 player_total_losses = np.mean(player_total_losses, 1)
                 
-                print(player_gen_losses.shape)
-                print(player_average_frame_losses.shape)
-                print(player_total_losses.shape)
-                
                 assert player_total_losses.shape[0] == len(PLAYERS)
                 
                 #new_losses = []
                 
-                player_print = "".join(["{:.2f}/{:.2f}/{:.3f}".format(x,y,z) for x,y,z in zip(player_average_frame_losses, player_gen_losses, player_total_losses)])
+                player_print = " ".join(["{:.2f}/{:.2f}/{:.3f}".format(x,y,z) for x,y,z in zip(player_average_frame_losses, player_gen_losses, player_total_losses)])
                 
                 print_line = "{} T: {:.3f} {:.3f} V: ".format(step, np.mean(losses[-1000:]), np.mean(reg_losses[-1000:])) + player_print
             

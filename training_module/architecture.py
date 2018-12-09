@@ -178,9 +178,9 @@ def build_model(inference=False, num_players=1):
 
     tf.add_to_collection('loss', loss)
     tf.add_to_collection('optimizer', optimizer)
-    tf.add_to_collection('player_gen_losses', player_gen_losses)
-    tf.add_to_collection('player_average_frame_losses', player_average_frame_losses)
-    tf.add_to_collection('player_total_losses', player_total_losses)
+    tf.add_to_collection('player_gen_losses', tf.stack(player_gen_losses))
+    tf.add_to_collection('player_average_frame_losses', tf.stack(player_average_frame_losses))
+    tf.add_to_collection('player_total_losses', tf.stack(player_total_losses))
     tf.add_to_collection('L2_loss', L2_loss)
 
     return
