@@ -308,7 +308,7 @@ for player in PLAYERS:
 
 [p.start() for p in processes]
 
-build_model()
+build_model(num_players=len(PLAYERS))
 
 frames_node = tf.get_collection('frames')[0]
 can_afford_node = tf.get_collection('can_afford')[0]
@@ -317,18 +317,23 @@ my_ships_node = tf.get_collection('my_ships')[0]
 moves_node = tf.get_collection('moves')[0]
 generate_node = tf.get_collection('generate')[0]
 loss_node = tf.get_collection('loss')[0]
-sanity_loss_node = tf.get_collection('sanity_loss')[0]
 optimizer_node = tf.get_collection('optimizer')[0]
 is_training = tf.get_collection('is_training')[0]
+
+player_gen_losses_node = tf.get_collection('player_gen_losses')[0]
+player_average_frame_losses_node = tf.get_collection('player_average_frame_losses')[0]
+player_total_losses_node = tf.get_collection('player_total_losses')[0]
+L2_loss_node = tf.get_collection('L2_loss')[0]
 
 #with open() # TODO: save out log
 
 #config = tf.ConfigProto()
 #config.gpu_options.allow_growth = True
-gpu_options = tf.GPUOptions(per_process_gpu_memory_fraction=0.90)
+gpu_options = tf.GPUOptions(per_process_gpu_memory_fraction=0.95)
 config=tf.ConfigProto(gpu_options=gpu_options)
 saver = tf.train.Saver()
-best = 999
+#best = np.ones((len(PLAYERS), ), dtype=np.int32)*999
+best = np.array([999 for _ in range(len(PLAYERS))])
 try:
     with tf.Session(config=config) as sess:
         tf.initializers.global_variables().run()
@@ -346,6 +351,7 @@ try:
 
         print("Training...")
         losses = []
+        reg_losses = []
         for step in range(20000000):
             player_batches = []
             for player in PLAYERS:
@@ -407,11 +413,13 @@ try:
                          is_training: True
                         }
 
-            loss, _ = sess.run([loss_node, optimizer_node], feed_dict=feed_dict)
+            loss, reg_loss, _ = sess.run([loss_node, L2_loss_node, optimizer_node], feed_dict=feed_dict)
             losses.append(loss)
+            reg_losses.append(reg_loss)
             if step % 5000 == 0:
-                v_losses = []
-                sanity_v_losses = []
+                player_gen_losses = []
+                player_average_frame_losses = []
+                player_total_losses = []
                 for _ in range(3000):
                 
                     player_batches = []
@@ -439,17 +447,48 @@ try:
                                  is_training: False
                                 }
 
-                    loss, sanity_loss = sess.run([loss_node, sanity_loss_node], feed_dict=feed_dict)
-                    v_losses.append(loss)
-                    sanity_v_losses.append(sanity_loss)
+
+
+
+
+                    gen_loss, frame_loss, total_loss = sess.run([player_gen_losses_node, player_average_frame_losses_node, player_total_losses_node], feed_dict=feed_dict)
+                    player_gen_losses.append(gen_loss)
+                    player_average_frame_losses.append(frame_loss)
+                    player_total_losses.append(total_loss)
+                    
+                    if step == 0:
+                        break
+                    
+                player_gen_losses = np.concatenate(player_gen_losses, 1)
+                player_average_frame_losses = np.concatenate(player_average_frame_losses, 1)
+                player_total_losses = np.concatenate(player_total_losses, 1)
+                
+                print(player_gen_losses.shape)
+                print(player_average_frame_losses.shape)
+                print(player_total_losses.shape)
+                
+                player_gen_losses = np.mean(player_gen_losses, 1)
+                player_average_frame_losses = np.mean(player_average_frame_losses, 1)
+                player_total_losses = np.mean(player_total_losses, 1)
+                
+                print(player_gen_losses.shape)
+                print(player_average_frame_losses.shape)
+                print(player_total_losses.shape)
+                
+                assert player_total_losses.shape[0] == len(PLAYERS)
+                
+                #new_losses = []
+                
+                player_print = "".join(["{:.2f}/{:.2f}/{:.3f}".format(x,y,z) for x,y,z in zip(player_average_frame_losses, player_gen_losses, player_total_losses)])
+                
+                print_line = "{} T: {:.3f} {:.3f} V: ".format(step, np.mean(losses[-1000:]), np.mean(reg_losses[-1000:])) + player_print
             
-                print(np.mean(sanity_v_losses))
-                if np.mean(v_losses) < best:
-                    best = np.mean(v_losses)
-                    #saver.save(sess, os.path.join(save_dir, 'model.ckpt'))
-                    print("{} {:.2f} {:.2f} *** new best ***".format(step, np.mean(losses[-1000:]), np.mean(v_losses)))
+                if np.sum(np.less(player_total_losses, best)) == len(PLAYERS): # All players must have improved
+                    best = player_total_losses
+                    saver.save(sess, os.path.join(save_dir, 'model.ckpt'))
+                    print(print_line + " *** new best ***")
                 else:
-                    print("{} {:.2f} {:.2f}".format(step, np.mean(losses[-1000:]), np.mean(v_losses)))
+                    print(print_line)
 
     #        for i in range(100000):
     #            loss, _ = sess.run([loss_node, optimizer_node], feed_dict=feed_dict)

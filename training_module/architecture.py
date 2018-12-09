@@ -126,6 +126,7 @@ def build_model(inference=False, num_players=1):
     tf.add_to_collection('m_logits', tf.stack(player_move_logits))
     tf.add_to_collection('g_logits', tf.stack(player_generate_logits))
     tf.add_to_collection('latent', latent)
+    tf.add_to_collection('m_probs', tf.nn.softmax(tf.stack(player_move_logits)))
     
     if inference:
         return
@@ -156,14 +157,14 @@ def build_model(inference=False, num_players=1):
 
     generate_losses = tf.nn.sigmoid_cross_entropy_with_logits(labels=generate, logits=generate_logits)
 
-    sanity_gen_loss = tf.reduce_mean(tf.split(generate_losses, 3)[0])
-    sanity_average_frame_loss = tf.reduce_mean(tf.split(average_frame_loss, 3)[0])
+    # Individual losses for validation
+    player_gen_losses = [tf.reduce_mean(x) for x in tf.split(generate_losses, num_players)]
+    player_average_frame_losses = [tf.reduce_mean(x) for x in tf.split(average_frame_loss, num_players)]
+    player_total_losses = [x+0.03*y for x,y in zip(player_average_frame_losses, player_gen_losses)]
     
     generate_losses = tf.reduce_mean(generate_losses) # TODO: do I need to add to frames before averaging?
 
     loss = tf.reduce_mean(average_frame_loss) + 0.03*generate_losses
-
-    sanity_loss = sanity_average_frame_loss + 0.03*sanity_gen_loss
     
     vars = [tf.nn.l2_loss(v) for v in tf.trainable_variables()
                     if 'bias' not in v.name and 'c' == v.name[0]]
@@ -176,8 +177,11 @@ def build_model(inference=False, num_players=1):
         optimizer = tf.train.AdamOptimizer(learning_rate).minimize(loss)
 
     tf.add_to_collection('loss', loss)
-    tf.add_to_collection('sanity_loss', sanity_loss)
     tf.add_to_collection('optimizer', optimizer)
+    tf.add_to_collection('player_gen_losses', player_gen_losses)
+    tf.add_to_collection('player_average_frame_losses', player_average_frame_losses)
+    tf.add_to_collection('player_total_losses', player_total_losses)
+    tf.add_to_collection('L2_loss', L2_loss)
 
     return
 
