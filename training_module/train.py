@@ -124,9 +124,7 @@ for player in PLAYERS:
     train, valid = filter_replays(player['pname'], player['versions'], player['pname'] == 'TheDuck314')
     player['train'] = train
     player['valid'] = valid
-    print(player['pname'])
-    print(len(train))
-    print(len(valid))
+    print("{} num train: {} num valid: {}".format(player['pname'], len(train), len(valid)))
 
 #assert keep, print(len(keep))
 
@@ -420,7 +418,7 @@ try:
                 player_gen_losses = []
                 player_average_frame_losses = []
                 player_total_losses = []
-                for _ in range(3000):
+                for vstep in range(3000):
                 
                     player_batches = []
                     for player in PLAYERS:
@@ -456,12 +454,16 @@ try:
                     player_average_frame_losses.append(frame_loss)
                     player_total_losses.append(total_loss)
                     
-                    if step == 0:
+                    if step == 0 and vstep == 5:
                         break
-                    
-                player_gen_losses = np.concatenate(player_gen_losses, 1)
-                player_average_frame_losses = np.concatenate(player_average_frame_losses, 1)
-                player_total_losses = np.concatenate(player_total_losses, 1)
+            
+                print(np.array(player_gen_losses).shape)
+                print(np.array(player_average_frame_losses).shape)
+                print(np.array(player_total_losses).shape)
+            
+                player_gen_losses = np.stack(player_gen_losses, 1)
+                player_average_frame_losses = np.stack(player_average_frame_losses, 1)
+                player_total_losses = np.stack(player_total_losses, 1)
                 
                 print(player_gen_losses.shape)
                 print(player_average_frame_losses.shape)
