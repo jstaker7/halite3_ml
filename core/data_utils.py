@@ -344,7 +344,7 @@ class Game(object):
         meta_features = np.tile(meta_features, [enemy_halite.shape[0], 1])
         
         opponent_features = [enemy_halite, halite_diff, num_opponent_ships]
-        opponent_features = np.stack(opponent_features, 1)
+        opponent_features = np.stack(opponent_features, -1)
         
         print(str(enemy_halite.shape, halite_diff.shape, num_opponent_ships.shape, opponent_features.shape))
         
