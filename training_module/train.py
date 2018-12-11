@@ -242,6 +242,7 @@ def worker(queue, size, pname, keep):
         except:
             continue
         
+        #frames, moves, generate, can_afford, turns_left = game.get_training_frames(pname=pname)
         frames, moves, generate, can_afford, turns_left = game.get_training_frames(pname=pname)
         
         # Avoid GC issues
@@ -305,7 +306,7 @@ for player in PLAYERS:
     player['v_batch_q'] = v_batch_queue
 
 [p.start() for p in processes]
-
+sdffsd
 build_model(num_players=len(PLAYERS))
 
 frames_node = tf.get_collection('frames')[0]

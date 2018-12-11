@@ -13,9 +13,7 @@ These are set to ensure that replay downloads, training, and live bots are all
 based on the same assumptions, e.g., the top-ranked player is so-and-so.
 """
 
-# Keep track of the top 10 players and their ranks
-PLAYERS = {'shummie': 1,
-}
+MAP_SIZES = [32, 40, 48, 56, 64]
 
 class Game(object):
     """
@@ -102,7 +100,7 @@ class Game(object):
         
         self.production = self.load_production(replay)
         self.moves, self.generate = self.load_moves(replay)
-        self.entities = self.load_entities(replay)
+        self.entities, self.ship_ids = self.load_entities(replay)
         self.energy = self.load_energy(replay)
         self.deposited = self.load_deposited(replay)
         self.dropoffs = self.load_dropoffs()
@@ -182,17 +180,22 @@ class Game(object):
         num_players = int(self.meta_data['number_of_players'])
         num_features = 2
         entities = []
-        for ix, frame in enumerate(replay['full_frames'][1:-1]): # No enties on first frame (last doesn't matter)
+        ship_ids = []
+        for ix, frame in enumerate(replay['full_frames'][1:-1]): # No entities on first frame (last doesn't matter)
             frame_entities = np.zeros((map_size, map_size, num_features+num_players), dtype=np.int32)
+            frame_ship_ids = np.zeros((map_size, map_size), dtype=np.int32)
             for pid in range(num_players):
                 for ent in frame['entities'][str(pid)]:
+                    ship_id = int(ent)
                     ent = frame['entities'][str(pid)][ent]
                     frame_entities[ent['y'], ent['x'], 0] = ent['energy']
                     frame_entities[ent['y'], ent['x'], 1] = int(ent['is_inspired']) # Not used
                     frame_entities[ent['y'], ent['x'], pid+num_features] = 1
+                    frame_ship_ids[ent['y'], ent['x']] = ship_id
             entities.append(frame_entities)
+            ship_ids.append(frame_ship_ids)
 
-        return np.array(entities)
+        return np.array(entities), np.array(ship_ids)
     
     def load_energy(self, replay):
         energy = [[f['energy'][y] for y in sorted(f['energy'].keys())] for f in replay['full_frames']]
@@ -266,8 +269,10 @@ class Game(object):
         factories = np.repeat(np.expand_dims(factories, 0), production.shape[0], 0)
 
         production = np.expand_dims(production, -1)
+        
+        ship_is_full = (entity_energies > 0.9999) * (my_ships>0.5)
 
-        frames = np.concatenate([production, has_ship, entity_energies, factories, has_dropoff], axis=-1)
+        frames = np.concatenate([production, has_ship, entity_energies, factories, has_dropoff, ship_is_full], axis=-1)
 
         # Note: 'no-moves' do not need explicit assignment since 0 means 'still'
         # and the arrays are initialled with zero.
@@ -279,20 +284,72 @@ class Game(object):
         #frames, my_ships, moves = self.pad_replay(frames, moves)
         
         generate = self.generate[:, pid]
-        energy = self.energy[:-1, pid] # -1 because I don't need final state here
+        my_energy = self.energy[:-1, pid] # -1 because I don't need final state here
         
-        can_afford_both = energy > 4999.
-        can_afford_drop = energy > 3999.
-        can_afford_ship = energy > 999.
+        can_afford_both = my_energy > 4999.
+        can_afford_drop = my_energy > 3999.
+        can_afford_ship = my_energy > 999.
+        
+        #***
+        mask = np.ones((my_energy.shape[0], self.energy.shape[-1]), np.bool)
+        mask[:, pid] = 0
+        opponent_energy = self.energy[:-1][mask]
+        
+        assert opponent_energy.shape[1] == self.energy.shape[1] - 1
+        
+        #opponent_highest_energy = np.amax(opponent_energy, -1)
+        
+        #print(opponent_highest_energy.shape)
+        
+        map_size_ix = MAP_SIZES.index(frames.shape[1])
+        map_size = np.zeros((len(MAP_SIZES),), dtype=np.float32)
+        map_size[map_size_ix] = 1.
+
+        my_halite = np.log10(my_energy/1000. + 1)
+        enemy_halite = np.log10(opponent_energy/1000. + 1)
+        _halite_diff = my_energy - opponent_energy
+        halite_diff = np.sign(_halite_diff) * np.log10(np.absolute(_halite_diff)/1000. + 1)
+
+        # diff between opponents will also be useful for RL later
         
         can_afford = np.stack([can_afford_ship, can_afford_drop, can_afford_both], -1)
         
         turns_left = np.array(list(range(can_afford.shape[0]-1, -1, -1)))
         turns_left = turns_left/200. - 1.
         
-        # Should also add diff between my score and others
+        print(halite_diff.shape)
+        num_opponents = 0 if len(halite_diff) == 1 else 1
+        
+        print(has_ship.shape)
+        num_opponent_ships = np.sum(has_ship < 0, axis=[1, 2])/50.
+        num_my_ships = np.sum(has_ship > 0, axis=[1, 2])/50.
+        
+        ship_id_feat = self.ship_ids * (my_ships>0.5)/50.
+        
+        print(frames.shape)
+        print(ship_id_feat.shape)
+        assert ship_id_feat.shape[0] == frames.shape[0]
+        
+        opponent_features = [enemy_halite, halite_diff, num_opponent_ships]
+        meta_features = [my_halite, map_size, turns_left, can_afford, num_opponents, num_my_ships, ship_id_feat]
+        
+        print('a')
+        for item in opponent_features:
+            print(item.shape)
+        print('b')
+        for item in meta_features:
+            print(item.shape)
+            
+        dsfsf
+            
+        # TODO: Combine them appropriately
+        
+        # you could also add map starting density to that if youre feeling
+        # really extreme. high density is such a different game from low.
+        # density on map, gini coefficient, log of total halite on map
+        # (normalized on per-size basis)
 
-        return frames, moves, generate, can_afford, turns_left #, my_ships
+        return frames, moves, generate, opponent_features, meta_features
 
     def center_frames(self, frames, moves=None, include_shift=False):
         my_factory = frames[0, :, :, 3] > 0
