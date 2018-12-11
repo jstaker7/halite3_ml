@@ -346,7 +346,7 @@ class Game(object):
         opponent_features = [enemy_halite, halite_diff, num_opponent_ships]
         opponent_features = np.stack(opponent_features, 1)
         
-        print(opponent_features.shape)
+        print(str(enemy_halite.shape, halite_diff.shape, num_opponent_ships.shape, opponent_features.shape))
         
         if opponent_features.shape[1] == 1:
             opponent_features = np.pad(opponent_features, (0, 2, 0), 'constant', constant_values=0)
