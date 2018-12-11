@@ -243,14 +243,14 @@ def worker(queue, size, pname, keep):
             continue
         
         #frames, moves, generate, can_afford, turns_left = game.get_training_frames(pname=pname)
-        frames, moves, generate, can_afford, turns_left = game.get_training_frames(pname=pname)
+        frames, moves, generate, my_player_features, opponent_features = game.get_training_frames(pname=pname)
         
         # Avoid GC issues
         frames = copy.deepcopy(frames)
         moves = copy.deepcopy(moves)
         generate = copy.deepcopy(generate)
-        can_afford = copy.deepcopy(can_afford)
-        turns_left = copy.deepcopy(turns_left)
+        my_player_features = copy.deepcopy(my_player_features)
+        opponent_features = copy.deepcopy(opponent_features)
         del game
         
 #        frames = frames[:25]
@@ -259,15 +259,15 @@ def worker(queue, size, pname, keep):
 #        can_afford = can_afford[:25]
 #        turns_left = turns_left[:25]
 
-        for pair in zip(frames, moves, generate, can_afford, turns_left):
+        for pair in zip(frames, moves, generate, my_player_features, opponent_features):
             #buffer.append(pair)
             queue.put(copy.deepcopy(pair))
 
         del frames
         del moves
         del generate
-        del can_afford
-        del turns_left
+        del my_player_features
+        del opponent_features
     
 #        if len(buffer) > 10:
 #            shuffle(buffer)
@@ -306,13 +306,12 @@ for player in PLAYERS:
     player['v_batch_q'] = v_batch_queue
 
 [p.start() for p in processes]
-import time
-time.sleep(999)
+
 build_model(num_players=len(PLAYERS))
 
 frames_node = tf.get_collection('frames')[0]
-can_afford_node = tf.get_collection('can_afford')[0]
-turns_left_node = tf.get_collection('turns_left')[0]
+opponent_features_node = tf.get_collection('opponent_features')[0]
+my_player_features_node = tf.get_collection('my_player_features')[0]
 my_ships_node = tf.get_collection('my_ships')[0]
 moves_node = tf.get_collection('moves')[0]
 generate_node = tf.get_collection('generate')[0]
@@ -396,7 +395,6 @@ try:
     #        buffer_queue
 
             g_batch = np.expand_dims(g_batch, -1)
-            t_batch = np.expand_dims(t_batch, -1)
             m_batch = np.expand_dims(m_batch, -1)
             s_batch = np.expand_dims(s_batch, -1)
             
@@ -405,8 +403,8 @@ try:
             #print(np.sum(s_batch))
             
             feed_dict = {frames_node: f_batch,
-                         can_afford_node: c_batch,
-                         turns_left_node: t_batch,
+                         my_player_features_node: c_batch,
+                         opponent_features: t_batch,
                          my_ships_node: s_batch,
                          moves_node: m_batch,
                          generate_node: g_batch,
@@ -434,13 +432,12 @@ try:
                         f_batch, m_batch, g_batch, c_batch, t_batch, s_batch = batch
     
                     g_batch = np.expand_dims(g_batch, -1)
-                    t_batch = np.expand_dims(t_batch, -1)
                     m_batch = np.expand_dims(m_batch, -1)
                     s_batch = np.expand_dims(s_batch, -1)
 
                     feed_dict = {frames_node: f_batch,
-                                 can_afford_node: c_batch,
-                                 turns_left_node: t_batch,
+                                 my_player_features_node: c_batch,
+                                 opponent_features_node: t_batch,
                                  my_ships_node: s_batch,
                                  moves_node: m_batch,
                                  generate_node: g_batch,

@@ -5,8 +5,13 @@ def build_model(inference=False, num_players=1):
     learning_rate = 0.0006
 
     frames = tf.placeholder(tf.float32, [None, 128, 128, 5])
-    can_afford = tf.placeholder(tf.float32, [None, 3])
-    turns_left = tf.placeholder(tf.float32, [None, 1])
+    #can_afford = tf.placeholder(tf.float32, [None, 3])
+    #turns_left = tf.placeholder(tf.float32, [None, 1])
+    
+    my_player_features = tf.placeholder(tf.float32, [None, 12])
+    opponent_features = tf.placeholder(tf.float32, [None, None, 3])
+    
+    
     my_ships = tf.placeholder(tf.uint8, [None, 128, 128, 1])
     
     my_ships = tf.cast(my_ships, tf.float32)
@@ -16,8 +21,8 @@ def build_model(inference=False, num_players=1):
     is_training = tf.placeholder(tf.bool)
 
     tf.add_to_collection('frames', frames)
-    tf.add_to_collection('can_afford', can_afford)
-    tf.add_to_collection('turns_left', turns_left)
+    tf.add_to_collection('my_player_features', my_player_features)
+    tf.add_to_collection('opponent_features', opponent_features)
     tf.add_to_collection('my_ships', my_ships)
     tf.add_to_collection('moves', moves)
     tf.add_to_collection('generate', generate)
@@ -25,8 +30,9 @@ def build_model(inference=False, num_players=1):
 
     moves = tf.one_hot(moves, 6)
 
-    ca = tf.layers.dense(can_afford, 16)
-    tl = tf.layers.dense(turns_left, 16)
+    ca = tf.layers.conv1d(opponent_features, 16, 1)
+    ca = tf.reduce_sum(c, 1)
+    tl = tf.layers.dense(my_player_features, 32) # NOTE: NEED TO ADD ACTIVATION??
 
     ca = tf.expand_dims(ca, 1)
     ca = tf.expand_dims(ca, 1)

@@ -183,7 +183,7 @@ class Game(object):
         ship_ids = []
         for ix, frame in enumerate(replay['full_frames'][1:-1]): # No entities on first frame (last doesn't matter)
             frame_entities = np.zeros((map_size, map_size, num_features+num_players), dtype=np.int32)
-            frame_ship_ids = np.zeros((map_size, map_size), dtype=np.int32)
+            frame_ship_ids = np.zeros((map_size, map_size), dtype=np.float32)
             for pid in range(num_players):
                 for ent in frame['entities'][str(pid)]:
                     ship_id = int(ent)
@@ -337,13 +337,11 @@ class Game(object):
         frames = np.concatenate([frames, ship_id_feat], axis=-1)
         
         meta_features = np.array(list(map_size) +  [num_opponents])
-        print(meta_features)
+
         assert meta_features.shape[0] == 6
         
         meta_features = np.expand_dims(meta_features, 0)
         meta_features = np.tile(meta_features, [enemy_halite.shape[0], 1])
-
-        print(meta_features.shape)
         
         opponent_features = [enemy_halite, halite_diff, num_opponent_ships]
         opponent_features = np.stack(opponent_features, 1)
@@ -352,21 +350,16 @@ class Game(object):
         
         my_player_features = np.concatenate(my_player_features, -1)
         
-        print(my_player_features.shape)
-        
-        print('a')
-        print(opponent_features.shape)
-            
-        dsfsf
-            
-        # TODO: Combine them appropriately
-        
         # you could also add map starting density to that if youre feeling
         # really extreme. high density is such a different game from low.
         # density on map, gini coefficient, log of total halite on map
         # (normalized on per-size basis)
 
-        return frames, moves, generate, opponent_features, meta_features
+        my_player_features = np.concatenate([my_player_features, meta_features], -1)
+        
+        print(my_player_features.shape)
+
+        return frames, moves, generate, my_player_features, opponent_features
 
     def center_frames(self, frames, moves=None, include_shift=False):
         my_factory = frames[0, :, :, 3] > 0
