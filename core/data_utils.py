@@ -240,6 +240,11 @@ class Game(object):
             my_ships = entities[:, :, :, 2+pid].copy()
         except:
             print(self.path)
+        
+        enemy_ship_counts = np.sum(entities[:, :, :, 2:].copy().astype(np.float32), (1, 2))
+        print(enemy_ship_counts.shape)
+        enemy_ship_counts = enemy_ship_counts[:, [x for x in range(num_p) if x != pid]]
+        print(enemy_ship_counts.shape)
 
         has_ship = np.sum(entities[:, :, :, 2:].copy().astype(np.float32), -1)
         
@@ -252,6 +257,8 @@ class Game(object):
         # Normalize
         entity_energies = (entities[:, :, :, 0].copy().astype(np.float32))/1000.
         entity_energies *= has_ship_mask
+        
+        ship_is_full = (entity_energies > 0.9999) * (my_ships>0.5)
 
         has_ship = np.expand_dims(has_ship, -1)
         entity_energies = np.expand_dims(entity_energies, -1)
@@ -269,8 +276,10 @@ class Game(object):
         factories = np.repeat(np.expand_dims(factories, 0), production.shape[0], 0)
 
         production = np.expand_dims(production, -1)
-        
-        ship_is_full = (entity_energies > 0.9999) * (my_ships>0.5)
+
+        print(ship_is_full)
+
+        ship_is_full = np.expand_dims(ship_is_full, -1)
 
         frames = np.concatenate([production, has_ship, entity_energies, factories, has_dropoff, ship_is_full], axis=-1)
 
@@ -289,25 +298,24 @@ class Game(object):
         can_afford_both = my_energy > 4999.
         can_afford_drop = my_energy > 3999.
         can_afford_ship = my_energy > 999.
-        
-        #***
+
         mask = np.ones((my_energy.shape[0], self.energy.shape[-1]), np.bool)
         mask[:, pid] = 0
+
         opponent_energy = self.energy[:-1][mask]
         
+        opponent_energy = opponent_energy.reshape((mask.shape[0], -1))
+        
         assert opponent_energy.shape[1] == self.energy.shape[1] - 1
-        
-        #opponent_highest_energy = np.amax(opponent_energy, -1)
-        
-        #print(opponent_highest_energy.shape)
         
         map_size_ix = MAP_SIZES.index(frames.shape[1])
         map_size = np.zeros((len(MAP_SIZES),), dtype=np.float32)
         map_size[map_size_ix] = 1.
 
         my_halite = np.log10(my_energy/1000. + 1)
+        my_halite = np.expand_dims(my_halite, -1)
         enemy_halite = np.log10(opponent_energy/1000. + 1)
-        _halite_diff = my_energy - opponent_energy
+        _halite_diff = np.expand_dims(my_energy, -1) - opponent_energy
         halite_diff = np.sign(_halite_diff) * np.log10(np.absolute(_halite_diff)/1000. + 1)
 
         # diff between opponents will also be useful for RL later
@@ -316,13 +324,16 @@ class Game(object):
         
         turns_left = np.array(list(range(can_afford.shape[0]-1, -1, -1)))
         turns_left = turns_left/200. - 1.
+
+        turns_left = np.expand_dims(turns_left, -1)
         
-        print(halite_diff.shape)
         num_opponents = 0 if len(halite_diff) == 1 else 1
         
-        print(has_ship.shape)
-        num_opponent_ships = np.sum(has_ship < 0, axis=[1, 2])/50.
-        num_my_ships = np.sum(has_ship > 0, axis=[1, 2])/50.
+        #num_opponent_ships = np.sum(has_ship < 0, axis=(1, 2))/50.
+        num_opponent_ships = enemy_ship_counts/50.
+        num_my_ships = np.sum(has_ship > 0, axis=(1, 2)/50.
+        
+        print(num_my_ships.shape)
         
         ship_id_feat = self.ship_ids * (my_ships>0.5)/50.
         
@@ -330,12 +341,28 @@ class Game(object):
         print(ship_id_feat.shape)
         assert ship_id_feat.shape[0] == frames.shape[0]
         
+        print(ship_id_feat)
+        ship_id_feat = np.expand_dims(ship_id_feat, -1)
+        frames = np.concatenate([frames, ship_id_feat], axis=-1)
+        
+        meta_features = np.array(list(map_size) +  [num_opponents])
+        print(meta_features)
+        assert meta_features.shape[0] == 6
+        
+        meta_features = np.expand_dims(meta_features, 0)
+        meta_features = np.tile(meta_features, [enemy_halite.shape[0], 1])
+        
         opponent_features = [enemy_halite, halite_diff, num_opponent_ships]
-        meta_features = [my_halite, map_size, turns_left, can_afford, num_opponents, num_my_ships, ship_id_feat]
+        opponent_features = np.stack(opponent_features, 1)
+        
+        my_player_features = [my_halite, turns_left, can_afford, num_my_ships]
+        
+        my_player_features = np.concatenate(my_player_features, -1)
+        
+        print(my_player_features.shape)
         
         print('a')
-        for item in opponent_features:
-            print(item.shape)
+        print(opponent_features.stack)
         print('b')
         for item in meta_features:
             print(item.shape)

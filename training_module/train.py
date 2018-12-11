@@ -306,7 +306,8 @@ for player in PLAYERS:
     player['v_batch_q'] = v_batch_queue
 
 [p.start() for p in processes]
-sdffsd
+import time
+time.sleep(999)
 build_model(num_players=len(PLAYERS))
 
 frames_node = tf.get_collection('frames')[0]
@@ -476,7 +477,7 @@ try:
             
                 if np.sum(np.less(player_total_losses, best)) == len(PLAYERS): # All players must have improved
                     best = player_total_losses
-                    saver.save(sess, os.path.join(save_dir, 'model.ckpt'))
+                    #saver.save(sess, os.path.join(save_dir, 'model.ckpt'))
                     print(print_line + " *** new best ***")
                 else:
                     print(print_line)
