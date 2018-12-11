@@ -404,7 +404,7 @@ try:
             
             feed_dict = {frames_node: f_batch,
                          my_player_features_node: c_batch,
-                         opponent_features: t_batch,
+                         opponent_features_node: t_batch,
                          my_ships_node: s_batch,
                          moves_node: m_batch,
                          generate_node: g_batch,
