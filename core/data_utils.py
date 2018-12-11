@@ -242,9 +242,7 @@ class Game(object):
             print(self.path)
         
         enemy_ship_counts = np.sum(entities[:, :, :, 2:].copy().astype(np.float32), (1, 2))
-        print(enemy_ship_counts.shape)
         enemy_ship_counts = enemy_ship_counts[:, [x for x in range(num_p) if x != pid]]
-        print(enemy_ship_counts.shape)
 
         has_ship = np.sum(entities[:, :, :, 2:].copy().astype(np.float32), -1)
         
@@ -276,8 +274,6 @@ class Game(object):
         factories = np.repeat(np.expand_dims(factories, 0), production.shape[0], 0)
 
         production = np.expand_dims(production, -1)
-
-        print(ship_is_full)
 
         ship_is_full = np.expand_dims(ship_is_full, -1)
 
@@ -327,21 +323,16 @@ class Game(object):
 
         turns_left = np.expand_dims(turns_left, -1)
         
-        num_opponents = 0 if len(halite_diff) == 1 else 1
+        num_opponents = 0 if num_p == 2 else 1
         
         #num_opponent_ships = np.sum(has_ship < 0, axis=(1, 2))/50.
         num_opponent_ships = enemy_ship_counts/50.
-        num_my_ships = np.sum(has_ship > 0, axis=(1, 2)/50.
-        
-        print(num_my_ships.shape)
+        num_my_ships = np.sum(has_ship > 0, axis=(1, 2))/50.
         
         ship_id_feat = self.ship_ids * (my_ships>0.5)/50.
-        
-        print(frames.shape)
-        print(ship_id_feat.shape)
+
         assert ship_id_feat.shape[0] == frames.shape[0]
-        
-        print(ship_id_feat)
+
         ship_id_feat = np.expand_dims(ship_id_feat, -1)
         frames = np.concatenate([frames, ship_id_feat], axis=-1)
         
@@ -351,6 +342,8 @@ class Game(object):
         
         meta_features = np.expand_dims(meta_features, 0)
         meta_features = np.tile(meta_features, [enemy_halite.shape[0], 1])
+
+        print(meta_features.shape)
         
         opponent_features = [enemy_halite, halite_diff, num_opponent_ships]
         opponent_features = np.stack(opponent_features, 1)
@@ -362,10 +355,7 @@ class Game(object):
         print(my_player_features.shape)
         
         print('a')
-        print(opponent_features.stack)
-        print('b')
-        for item in meta_features:
-            print(item.shape)
+        print(opponent_features.shape)
             
         dsfsf
             
