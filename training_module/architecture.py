@@ -31,7 +31,7 @@ def build_model(inference=False, num_players=1):
     moves = tf.one_hot(moves, 6)
 
     ca = tf.layers.conv1d(opponent_features, 16, 1)
-    ca = tf.reduce_sum(c, 1)
+    ca = tf.reduce_sum(ca, 1)
     tl = tf.layers.dense(my_player_features, 32) # NOTE: NEED TO ADD ACTIVATION??
 
     ca = tf.expand_dims(ca, 1)

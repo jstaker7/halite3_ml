@@ -346,6 +346,13 @@ class Game(object):
         opponent_features = [enemy_halite, halite_diff, num_opponent_ships]
         opponent_features = np.stack(opponent_features, 1)
         
+        print(opponent_features.shape)
+        
+        if opponent_features.shape[1] == 1:
+            opponent_features = np.pad(opponent_features, (0, 2, 0), 'constant', constant_values=0)
+        
+        print(opponent_features.shape)
+        
         my_player_features = [my_halite, turns_left, can_afford, num_my_ships]
         
         my_player_features = np.concatenate(my_player_features, -1)
@@ -356,8 +363,6 @@ class Game(object):
         # (normalized on per-size basis)
 
         my_player_features = np.concatenate([my_player_features, meta_features], -1)
-        
-        print(my_player_features.shape)
 
         return frames, moves, generate, my_player_features, opponent_features
 
