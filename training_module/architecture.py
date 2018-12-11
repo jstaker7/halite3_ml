@@ -4,7 +4,7 @@ def build_model(inference=False, num_players=1):
 
     learning_rate = 0.0006
 
-    frames = tf.placeholder(tf.float32, [None, 128, 128, 5])
+    frames = tf.placeholder(tf.float32, [None, 128, 128, 7])
     #can_afford = tf.placeholder(tf.float32, [None, 3])
     #turns_left = tf.placeholder(tf.float32, [None, 1])
     
