@@ -1,8 +1,8 @@
 import tensorflow as tf
 
-def build_model(inference=False, num_players=1):
+def build_model(inference=False, num_players=1, learning_rate=None):
 
-    learning_rate = 0.0006
+    #learning_rate = 0.0006
 
     frames = tf.placeholder(tf.float32, [None, 128, 128, 7])
     #can_afford = tf.placeholder(tf.float32, [None, 3])
@@ -30,16 +30,18 @@ def build_model(inference=False, num_players=1):
 
     moves = tf.one_hot(moves, 6)
 
-    ca = tf.layers.conv1d(opponent_features, 16, 1)
+    ca = tf.layers.conv1d(opponent_features, 16, 1, activation=tf.nn.relu)
+    ca = tf.layers.conv1d(ca, 16, 1, activation=tf.nn.relu)
     ca = tf.reduce_sum(ca, 1)
-    tl = tf.layers.dense(my_player_features, 32) # NOTE: NEED TO ADD ACTIVATION??
+    tl = tf.layers.dense(my_player_features, 32, activation=tf.nn.relu)
+    tl = tf.layers.dense(tl, 16, activation=tf.nn.relu)
 
     ca = tf.expand_dims(ca, 1)
     ca = tf.expand_dims(ca, 1)
     tl = tf.expand_dims(tl, 1)
     tl = tf.expand_dims(tl, 1)
 
-    d_l2_a_1 = tf.layers.conv2d(frames, 64, 3, activation=tf.nn.relu, padding='same', name='c1') # 128
+    d_l2_a_1 = tf.layers.conv2d(frames, 32, 3, activation=tf.nn.relu, padding='same', name='c1') # 128
     d_l2_a_1 = tf.layers.batch_normalization(d_l2_a_1, training=is_training, name='bn1')
 
     d_l2_p = tf.layers.conv2d(d_l2_a_1, 16, 3, strides=2, activation=tf.nn.relu, padding='same', name='c4') # 64; This might be incorrect -- too agressive downsampling considering the input size

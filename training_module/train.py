@@ -64,15 +64,15 @@ with gzip.open(os.path.join(replay_root, 'INDEX.pkl'), 'rb') as infile:
 
 PLAYERS = [
             {'pname': 'TheDuck314',
-             'versions': [30, 31, 33, 34, 35, 36], # 39, 40, 41, 42, 43, 44
+             'versions': [30, 31, 33, 34, 35, 36, 39, 40, 41, 42, 43, 44, 47, 48, 50, 52],
              },
            
             {'pname': 'teccles',
-             'versions': [96, 97, 98, 99, 100, 101, 102, 103],
+             'versions': [96, 97, 98, 99, 100, 101, 102, 103, 105, 107, 108, 111, 112],
              },
 
             {'pname': 'reCurs3',
-             'versions': [113, 114, 115, 117, 120],
+             'versions': [113, 114, 115, 117, 120, 125, 126, 127, 128],
              },
 ]
 
@@ -307,7 +307,9 @@ for player in PLAYERS:
 
 [p.start() for p in processes]
 
-build_model(num_players=len(PLAYERS))
+learning_rate = tf.placeholder(tf.float32, shape=[])
+
+build_model(num_players=len(PLAYERS), learning_rate=learning_rate)
 
 frames_node = tf.get_collection('frames')[0]
 opponent_features_node = tf.get_collection('opponent_features')[0]
@@ -402,13 +404,19 @@ try:
             
             #print(np.sum(s_batch))
             
+            T = 400000
+            M = T/20000
+            t = step
+            lr = (0.001/2.)*(np.cos(np.pi*np.mod(t - 1, T/M)/(T/M)) + 1)
+
             feed_dict = {frames_node: f_batch,
                          my_player_features_node: c_batch,
                          opponent_features_node: t_batch,
                          my_ships_node: s_batch,
                          moves_node: m_batch,
                          generate_node: g_batch,
-                         is_training: True
+                         is_training: True,
+                         learning_rate: lr
                         }
 
             loss, reg_loss, _ = sess.run([loss_node, L2_loss_node, optimizer_node], feed_dict=feed_dict)
@@ -444,10 +452,6 @@ try:
                                  is_training: False
                                 }
 
-
-
-
-
                     gen_loss, frame_loss, total_loss = sess.run([player_gen_losses_node, player_average_frame_losses_node, player_total_losses_node], feed_dict=feed_dict)
                     player_gen_losses.append(gen_loss)
                     player_average_frame_losses.append(frame_loss)
@@ -474,7 +478,7 @@ try:
             
                 if np.sum(np.less(player_total_losses, best)) == len(PLAYERS): # All players must have improved
                     best = player_total_losses
-                    #saver.save(sess, os.path.join(save_dir, 'model.ckpt'))
+                    saver.save(sess, os.path.join(save_dir, 'model.ckpt'))
                     print(print_line + " *** new best ***")
                 else:
                     print(print_line)
