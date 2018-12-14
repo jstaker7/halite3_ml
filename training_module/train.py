@@ -324,7 +324,7 @@ is_training = tf.get_collection('is_training')[0]
 player_gen_losses_node = tf.get_collection('player_gen_losses')[0]
 player_average_frame_losses_node = tf.get_collection('player_average_frame_losses')[0]
 player_total_losses_node = tf.get_collection('player_total_losses')[0]
-L2_loss_node = tf.get_collection('L2_loss')[0]
+#L2_loss_node = tf.get_collection('L2_loss')[0]
 
 #with open() # TODO: save out log
 
@@ -419,7 +419,8 @@ try:
                          learning_rate: lr
                         }
 
-            loss, reg_loss, _ = sess.run([loss_node, L2_loss_node, optimizer_node], feed_dict=feed_dict)
+            loss, _ = sess.run([loss_node, optimizer_node], feed_dict=feed_dict)
+            reg_loss = 0
             losses.append(loss)
             reg_losses.append(reg_loss)
             if step % 5000 == 0:
