@@ -298,6 +298,7 @@ class Game(object):
         will_have_ship = np.concatenate([will_have_ship, has_shipyard_or_dropoff], 0)
         will_have_ship = will_have_ship.astype('uint8')#.astype('float32')
         #will_have_ship = np.expand_dims(will_have_ship, -1)
+        will_have_ship = np.squeeze(will_have_ship, -1)
 
         #frames, my_ships, moves = self.pad_replay(frames, moves)
         
