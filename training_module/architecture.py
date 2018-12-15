@@ -209,16 +209,19 @@ def build_model(inference=False, num_players=1, learning_rate=None, fine_tune=Fa
     else:
         have_ship_mask = tf.constant(np.ones((1, 128, 128, 5)))
 
-    have_ship_mask = tf.reduce_sum(have_ship_mask, -1) > 0.5
+    have_ship_mask = tf.reduce_sum(have_ship_mask, -1) #> 0.5
+    have_ship_mask = tf.greater(have_ship_mask, 0.5)
 
     have_ship_mask = tf.cast(have_ship_mask, 'float32')
+
+    have_ship_mask = tf.expand_dims(have_ship_mask, -1)
 
     masked_loss = losses * my_ships
 #    print(have_ship_losses.get_shape())
 #    print(have_ship_mask.get_shape())
 #    dsffs
     # TODO: Do a serious look at all the shapes and ensure things are proper
-    have_ship_losses = have_ship_losses * tf.expand_dims(have_ship_mask, -1)
+    have_ship_losses = have_ship_losses * have_ship_mask
 
     ships_per_frame = tf.reduce_sum(my_ships, axis=[1, 2])
 
