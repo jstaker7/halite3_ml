@@ -158,9 +158,9 @@ def build_model(inference=False, num_players=1, learning_rate=None, fine_tune=Fa
     tf.add_to_collection('b_logits', tf.stack(player_should_construct_logits))
     tf.add_to_collection('w_logits', tf.stack(player_did_win_logits))
     
-    if inference:
-        assert False
-        return
+#    if inference:
+#        assert False
+#        return
 
     # TODO: Can be improved with gather_nd
     moves_logits = [tf.split(x, num_players) for x in player_move_logits]
@@ -190,7 +190,6 @@ def build_model(inference=False, num_players=1, learning_rate=None, fine_tune=Fa
                                                 logits=will_have_ship_logits)
 
     losses = tf.expand_dims(losses, -1)
-    have_ship_losses = tf.expand_dims(have_ship_losses, -1)
 
     if True:
         kernel = [[[0, 0, 0], [0, 1, 0], [0, 0, 0]],
@@ -215,7 +214,11 @@ def build_model(inference=False, num_players=1, learning_rate=None, fine_tune=Fa
     have_ship_mask = tf.cast(have_ship_mask, 'float32')
 
     masked_loss = losses * my_ships
-    have_ship_losses = have_ship_losses * have_ship_mask
+#    print(have_ship_losses.get_shape())
+#    print(have_ship_mask.get_shape())
+#    dsffs
+    # TODO: Do a serious look at all the shapes and ensure things are proper
+    have_ship_losses = have_ship_losses * tf.expand_dims(have_ship_mask, -1)
 
     ships_per_frame = tf.reduce_sum(my_ships, axis=[1, 2])
 
