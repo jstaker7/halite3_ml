@@ -233,7 +233,6 @@ def build_model(inference=False, num_players=1, learning_rate=None, fine_tune=Fa
     have_ship_average_frame_loss = have_ship_frame_loss / tf.maximum(ship_positions_per_frame, 1e-13) # First frames have no ship
 
     generate_losses = tf.nn.sigmoid_cross_entropy_with_logits(labels=generate, logits=generate_logits)
-    
     should_construct_losses = tf.nn.sigmoid_cross_entropy_with_logits(labels=should_construct, logits=should_construct_logits)
     did_win_losses = tf.nn.sigmoid_cross_entropy_with_logits(labels=did_win, logits=did_win_logits)
 
@@ -279,7 +278,7 @@ def build_model(inference=False, num_players=1, learning_rate=None, fine_tune=Fa
     tf.add_to_collection('player_have_ship_average_frame_losses', tf.stack(player_have_ship_average_frame_losses))
     tf.add_to_collection('player_total_losses', tf.stack(player_total_losses))
     tf.add_to_collection('player_should_construct_losses', tf.stack(player_should_construct_losses))
-    tf.add_to_collection('did_win_losses', tf.stack(did_win_losses))
+    tf.add_to_collection('did_win_losses', tf.stack(player_did_win_losses))
 
     return
 
