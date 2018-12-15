@@ -218,6 +218,11 @@ class Game(object):
                     
         assert pid is not None, "Error: player not found in replay"
         
+        for player in self.meta_data['game_statistics']['player_statistics']:
+            if int(player['player_id']) == int(pid):
+                did_win = int(player['rank']) == 1
+                break
+        
         num_p = int(self.meta_data['number_of_players'])
         if pid >= num_p:
             print(self.path)
@@ -284,7 +289,15 @@ class Game(object):
         
         moves = self.moves[:, :, :, pid]
 
-        frames, moves = self.center_frames(frames, moves)
+        frames, moves = self.center_frames(frames, moves) # TODO: Double check that moves are adjusted properly
+        
+        will_have_ship = frames[1] > 0.5 # TODO: resolve generate first, below
+        will_have_ship = will_have_ship[1:] # TODO: also resolve these moves in order of confidence
+        has_shipyard_or_dropoff = (frames[:1, :, :, 3] > 0.5).astype('float32') + (has_dropoff[-1:] > 0.5).astype('float32')
+        has_shipyard_or_dropoff = has_shipyard_or_dropoff > 0.5
+        will_have_ship = np.concatenate([will_have_ship, has_shipyard_or_dropoff], 0)
+        will_have_ship = will_have_ship.astype('uint8')#.astype('float32')
+        will_have_ship = np.expand_dims(will_have_ship, -1)
 
         #frames, my_ships, moves = self.pad_replay(frames, moves)
         
@@ -359,11 +372,17 @@ class Game(object):
         # (normalized on per-size basis)
 
         my_player_features = np.concatenate([my_player_features, meta_features], -1)
+        
+        should_construct = np.sum((moves[:, :, :] > 4.5).astype('float32'), (1,2)) > 0.5
+        should_construct = should_construct.astype('float32')
 
-        return frames, moves, generate, my_player_features, opponent_features
+        did_win = [did_win for _ in range(should_construct.shape[0])]
+        did_win = np.array(did_win).astype('float32')
+
+        return frames, moves, generate, my_player_features, opponent_features, will_have_ship, should_construct, did_win
 
     def center_frames(self, frames, moves=None, include_shift=False):
-        my_factory = frames[0, :, :, 3] > 0
+        my_factory = frames[0, :, :, 3] > 0.5
         pos = np.squeeze(np.where(my_factory>0))
         expected_pos = np.squeeze(my_factory.shape)//2 # Assuming always square
         shift = expected_pos - pos
@@ -442,7 +461,7 @@ class Game(object):
         else:
             return frames, my_ships
 
-    def pad_replay(self, frames, moves=None, include_padding=False):
+    def pad_replay(self, frames, moves=None, include_padding=False, will_have_ship=None):
         
         map_size = frames.shape[1]
     
@@ -471,6 +490,9 @@ class Game(object):
             if moves is not None:
                 moves = np.concatenate([moves[:, -pad_y1:], moves, moves[:, :pad_y2]], axis=1)
             
+            if will_have_ship is not None:
+                will_have_ship = np.concatenate([will_have_ship[:, -pad_y1:], will_have_ship, will_have_ship[:, :pad_y2]], axis=1)
+            
             pad_x1 = (min(max_dim, frames.shape[2]*3) - frames.shape[2])//2
             pad_x2 = (min(max_dim, frames.shape[2]*3) - frames.shape[2]) - pad_x1
             frames = np.concatenate([frames[:, :, -pad_x1:], frames, frames[:, :, :pad_x2]], axis=2)
@@ -483,6 +505,12 @@ class Game(object):
         
             if moves is not None:
                 moves = np.concatenate([moves[:, :, -pad_x1:], moves, moves[:, :, :pad_x2]], axis=2)
+                
+            if will_have_ship is not None:
+                will_have_ship = np.concatenate([will_have_ship[:, :, -pad_x1:], will_have_ship, will_have_ship[:, :, :pad_x2]], axis=2)
+                
+        if moves is not None and will_have_ship is not None:
+            return frames, my_ships.astype('uint8'), moves.astype('uint8'), will_have_ship.astype('uint8')
 
         if moves is not None:
             return frames, my_ships.astype('uint8'), moves.astype('uint8')

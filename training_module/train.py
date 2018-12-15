@@ -158,54 +158,61 @@ def batch_prep(buffer, batch_queue):
     frames = []
     moves = []
     generates = []
-    can_affords = []
-    turns_lefts = []
+    my_player_features = []
+    opponent_features = []
     my_ships = []
+    
+    will_have_ships = []
+    should_constructs = []
+    did_wins = []
 
     while True:
         if buffer.qsize() < min_buffer_size:
             time.sleep(1)
             continue
         p, t, data = buffer.get()
-        #print('a')
-        #print(p)
-        #print(t)
         
-        frame, move, generate, can_afford, turns_left = data
+        frame, move, generate, my_player_feature, opponent_feature, will_have_ship, should_construct, did_win = data
         frame = np.expand_dims(frame, 0)
         move = np.expand_dims(move, 0)
-        frame, my_ship, move = game.pad_replay(frame, move)
-        
-        #print(np.sum(my_ship))
-        #time.sleep(1)
+        will_have_ship = np.expand_dims(will_have_ship, 0)
+        frame, my_ship, move, will_have_ship = game.pad_replay(frame, move, will_have_ship=will_have_ship)
 
         frames.append(frame[0])
         moves.append(move[0])
+        will_have_ships.append(will_have_ship[0])
         generates.append(generate)
-        can_affords.append(can_afford)
-        turns_lefts.append(turns_left)
+        my_player_features.append(my_player_feature)
+        opponent_features.append(opponent_feature)
         my_ships.append(my_ship[0])
+        should_constructs.append(should_construct)
+        did_wins.append(did_win)
 
         if len(frames) == batch_size:
-            pair = np.array(frames), np.array(moves), np.array(generates), np.array(can_affords), np.array(turns_lefts), np.array(my_ships)
+            pair = np.array(frames), np.array(moves), np.array(generates), np.array(my_player_features), np.array(opponent_features), np.array(my_ships), np.array(will_have_ships), np.array(should_constructs), np.array(did_wins)
             batch_queue.put(copy.deepcopy(pair))
             
             del pair
             del frames
             del moves
             del generates
-            del can_affords
-            del turns_lefts
+            del my_player_features
+            del opponent_features
             del my_ships
+            del will_have_ships
+            del should_constructs
+            del did_wins
             
             # Reset
             frames = []
             moves = []
             generates = []
-            can_affords = []
-            turns_lefts = []
+            my_player_features = []
+            opponent_features = []
             my_ships = []
-
+            will_have_ships = []
+            should_constructs = []
+            did_wins = []
 
 
 def buffer(raw_queues, buffer_q):
@@ -215,13 +222,9 @@ def buffer(raw_queues, buffer_q):
 
         pair = queue.get()
         
-        #for pair in zip(game):
         # Basically shuffles as it goes
         rand_priority = np.random.randint(max_buffer_size)
-        #print('b')
-        #print(rand_priority)
         buffer_q.put((rand_priority, time.time(), pair))
-        #time.sleep(1)
 
 def worker(queue, size, pname, keep):
     np.random.seed(size) # Use size as seed
@@ -241,9 +244,8 @@ def worker(queue, size, pname, keep):
             game.load_replay(path)
         except:
             continue
-        
-        #frames, moves, generate, can_afford, turns_left = game.get_training_frames(pname=pname)
-        frames, moves, generate, my_player_features, opponent_features = game.get_training_frames(pname=pname)
+    
+        frames, moves, generate, my_player_features, opponent_features, will_have_ship, should_construct, did_win = game.get_training_frames(pname=pname)
         
         # Avoid GC issues
         frames = copy.deepcopy(frames)
@@ -251,6 +253,9 @@ def worker(queue, size, pname, keep):
         generate = copy.deepcopy(generate)
         my_player_features = copy.deepcopy(my_player_features)
         opponent_features = copy.deepcopy(opponent_features)
+        will_have_ship = copy.deepcopy(will_have_ship)
+        should_construct = copy.deepcopy(should_construct)
+        did_win = copy.deepcopy(did_win)
         del game
         
 #        frames = frames[:25]
@@ -259,7 +264,11 @@ def worker(queue, size, pname, keep):
 #        can_afford = can_afford[:25]
 #        turns_left = turns_left[:25]
 
-        for pair in zip(frames, moves, generate, my_player_features, opponent_features):
+        shapes = [frames.shape[0], moves.shape[0], generate.shape[0], my_player_features.shape[0], opponent_features.shape[0], will_have_ship.shape[0], should_construct.shape[0], did_win.shape[0]]
+
+        assert len(set(shapes)) == 1, print(shapes)
+
+        for pair in zip(frames, moves, generate, my_player_features, opponent_features, will_have_ship, should_construct, did_win):
             #buffer.append(pair)
             queue.put(copy.deepcopy(pair))
 
@@ -268,6 +277,9 @@ def worker(queue, size, pname, keep):
         del generate
         del my_player_features
         del opponent_features
+        del will_have_ship
+        del should_construct
+        del did_win
     
 #        if len(buffer) > 10:
 #            shuffle(buffer)
@@ -324,7 +336,16 @@ is_training = tf.get_collection('is_training')[0]
 player_gen_losses_node = tf.get_collection('player_gen_losses')[0]
 player_average_frame_losses_node = tf.get_collection('player_average_frame_losses')[0]
 player_total_losses_node = tf.get_collection('player_total_losses')[0]
+player_have_ship_average_frame_losses_node = tf.get_collection('player_have_ship_average_frame_losses')[0]
+player_should_construct_losses_node = tf.get_collection('player_should_construct_losses')[0]
+did_win_losses_node = tf.get_collection('did_win_losses')[0]
+
+will_have_ship_node = tf.get_collection('will_have_ship')[0]
+should_construct_node = tf.get_collection('should_construct')[0]
+did_win_node = tf.get_collection('did_win')[0]
 #L2_loss_node = tf.get_collection('L2_loss')[0]
+
+
 
 #with open() # TODO: save out log
 
@@ -360,46 +381,22 @@ try:
                 player_batches.append(batch)
             
             if len(PLAYERS) == 1:
+                assert False # Only focusing on multiple players from now on
                 f_batch, m_batch, g_batch, c_batch, t_batch, s_batch = batch
             else:
                 batch = [np.concatenate(x, 0) for x in zip(*player_batches)]
-                f_batch, m_batch, g_batch, c_batch, t_batch, s_batch = batch
-            
-            #f_batch, m_batch, g_batch, c_batch, t_batch, s_batch = data
-
-            #f_batch, m_batch, g_batch, c_batch, t_batch, s_batch = [], [], [], [], [], []
-            
-    #        #shuffle(buffer)
-    #
-    #        for i in range(batch_size):
-    #            frame, move, generate, can_afford, turns_left, my_ships = buffer.pop()
-    #            f_batch.append(frame)
-    #            m_batch.append(move)
-    #            g_batch.append(generate)
-    #            c_batch.append(can_afford)
-    #            t_batch.append(turns_left)
-    #            s_batch.append(my_ships)
-    #
-    #        # Replenish buffer
-    #        for i in range(batch_size):
-    #            which_queue = np.random.randint(5)
-    #            queue = queues[which_queue]
-    #            pair = queue.get()
-    #            buffer.append(pair)
-    #
-    #        f_batch = np.stack(f_batch)
-    #        m_batch = np.stack(m_batch)
-    #        g_batch = np.stack(g_batch)
-    #        c_batch = np.stack(c_batch)
-    #        t_batch = np.stack(t_batch)
-    #        s_batch = np.stack(s_batch)
-    #
-    #        buffer_queue
+                shapes = [x.shape[0] for x in batch]
+                assert len(set(shapes)) == 1
+                f_batch, m_batch, g_batch, c_batch, t_batch, s_batch, h_batch, b_batch, w_batch = batch
 
             g_batch = np.expand_dims(g_batch, -1)
             m_batch = np.expand_dims(m_batch, -1)
             s_batch = np.expand_dims(s_batch, -1)
+            h_batch = np.expand_dims(h_batch, -1)
+            b_batch = np.expand_dims(b_batch, -1)
+            w_batch = np.expand_dims(w_batch, -1)
             
+
             #print([x.shape for x in [f_batch, m_batch, g_batch, c_batch, t_batch, s_batch]])
             
             #print(np.sum(s_batch))
@@ -416,7 +413,10 @@ try:
                          moves_node: m_batch,
                          generate_node: g_batch,
                          is_training: True,
-                         learning_rate: lr
+                         learning_rate: lr,
+                         will_have_ship_node: h_batch,
+                         should_construct_node: b_batch,
+                         did_win_node: w_batch
                         }
 
             loss, _ = sess.run([loss_node, optimizer_node], feed_dict=feed_dict)
@@ -427,6 +427,9 @@ try:
                 player_gen_losses = []
                 player_average_frame_losses = []
                 player_total_losses = []
+                player_have_ship_losses = []
+                player_should_construct_losses = []
+                player_did_win_losses = []
                 for vstep in range(3000):
                 
                     player_batches = []
@@ -435,14 +438,18 @@ try:
                         player_batches.append(batch)
                     
                     if len(PLAYERS) == 1:
+                        assert False
                         f_batch, m_batch, g_batch, c_batch, t_batch, s_batch = batch
                     else:
                         batch = [np.concatenate(x, 0) for x in zip(*player_batches)]
-                        f_batch, m_batch, g_batch, c_batch, t_batch, s_batch = batch
+                        f_batch, m_batch, g_batch, c_batch, t_batch, s_batch, h_batch, b_batch, w_batch = batch
     
                     g_batch = np.expand_dims(g_batch, -1)
                     m_batch = np.expand_dims(m_batch, -1)
                     s_batch = np.expand_dims(s_batch, -1)
+                    h_batch = np.expand_dims(h_batch, -1)
+                    b_batch = np.expand_dims(b_batch, -1)
+                    w_batch = np.expand_dims(w_batch, -1)
 
                     feed_dict = {frames_node: f_batch,
                                  my_player_features_node: c_batch,
@@ -450,13 +457,20 @@ try:
                                  my_ships_node: s_batch,
                                  moves_node: m_batch,
                                  generate_node: g_batch,
-                                 is_training: False
+                                 is_training: False,
+                                 will_have_ship_node: h_batch,
+                                 should_construct_node: b_batch,
+                                 did_win_node: w_batch
                                 }
 
-                    gen_loss, frame_loss, total_loss = sess.run([player_gen_losses_node, player_average_frame_losses_node, player_total_losses_node], feed_dict=feed_dict)
+                    gen_loss, frame_loss, total_loss, hs_loss, b_loss, w_loss = sess.run([player_gen_losses_node, player_average_frame_losses_node, player_total_losses_node, player_have_ship_average_frame_losses_node, player_should_construct_losses_node, did_win_losses_node], feed_dict=feed_dict)
                     player_gen_losses.append(gen_loss)
                     player_average_frame_losses.append(frame_loss)
                     player_total_losses.append(total_loss)
+                    
+                    player_have_ship_losses.append(hs_loss)
+                    player_should_construct_losses.append(b_loss)
+                    player_did_win_losses.append(w_loss)
                     
                     if step == 0 and vstep == 5:
                         break
@@ -464,16 +478,22 @@ try:
                 player_gen_losses = np.stack(player_gen_losses, 1)
                 player_average_frame_losses = np.stack(player_average_frame_losses, 1)
                 player_total_losses = np.stack(player_total_losses, 1)
+                player_have_ship_losses = np.stack(player_have_ship_losses, 1)
+                player_should_construct_losses = np.stack(player_should_construct_losses, 1)
+                player_did_win_losses = np.stack(player_did_win_losses, 1)
                 
                 player_gen_losses = np.mean(player_gen_losses, 1)
                 player_average_frame_losses = np.mean(player_average_frame_losses, 1)
                 player_total_losses = np.mean(player_total_losses, 1)
+                player_have_ship_losses = np.mean(player_have_ship_losses, 1)
+                player_should_construct_losses = np.mean(player_should_construct_losses, 1)
+                player_did_win_losses = np.mean(player_did_win_losses, 1)
                 
                 assert player_total_losses.shape[0] == len(PLAYERS)
                 
                 #new_losses = []
                 
-                player_print = " ".join(["{:.2f}/{:.2f}/{:.3f}".format(x,y,z) for x,y,z in zip(player_average_frame_losses, player_gen_losses, player_total_losses)])
+                player_print = " ".join(["{:.2f}/{:.2f}/{:.2f}/{:.2f}/{:.2f}/{:.3f}".format(x,y,z,j,k,l) for x,y,z,j,k,l in zip(player_average_frame_losses, player_gen_losses, player_have_ship_losses, player_should_construct_losses, player_did_win_losses, player_total_losses)])
                 
                 print_line = "{} T: {:.3f} {:.6f} V: ".format(step, np.mean(losses[-1000:]), np.mean(reg_losses[-1000:])) + player_print
             
