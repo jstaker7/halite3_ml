@@ -78,7 +78,7 @@ def build_model(inference=False, num_players=1, learning_rate=None, fine_tune=Fa
     d_l8_p = tf.layers.batch_normalization(d_l8_p, training=is_training, name='bn17')
 
     final_state = tf.concat([d_l8_p, ca, tl], -1)
-    latent = tf.layers.dense(final_state, 256, activation=tf.nn.relu, name='c19')
+    latent = tf.layers.dense(final_state, 512, activation=tf.nn.relu, name='c19')
 
     u_l8_a = tf.layers.conv2d_transpose(latent, 128, 3, 2, activation=tf.nn.relu, padding='same', name='c20') # 2
     u_l8_c = tf.concat([u_l8_a, d_l8_a_2], -1)
@@ -124,7 +124,8 @@ def build_model(inference=False, num_players=1, learning_rate=None, fine_tune=Fa
     player_did_win_logits = []
     for i in range(num_players):
 
-        gen_latent = tf.layers.dense(latent, 64, activation=tf.nn.relu, name='c39_{}'.format(i))
+        gen_latent1 = tf.layers.dense(latent, 128, activation=tf.nn.relu, name='c39_{}'.format(i))
+        gen_latent = tf.layers.dense(gen_latent1, 128, activation=tf.nn.relu, name='c39b_{}'.format(i))
         generate_logits = tf.layers.dense(gen_latent, 1, activation=None, name='c40_{}'.format(i))
         generate_logits = tf.squeeze(generate_logits, [1, 2])
 
@@ -138,7 +139,8 @@ def build_model(inference=False, num_players=1, learning_rate=None, fine_tune=Fa
         will_have_ship_latent = tf.layers.conv2d(u_l2_s_2, 64, 3, activation=tf.nn.relu, padding='same', name='c45_{}'.format(i)) # Try 1 kernel
         will_have_ship_logits = tf.layers.conv2d(will_have_ship_latent, 1, 3, activation=None, padding='same', name='c46_{}'.format(i)) # Try 1 kernel
         
-        did_win_latent = tf.layers.dense(latent, 64, activation=tf.nn.relu, name='c47_{}'.format(i))
+        did_win_latent1 = tf.layers.dense(latent, 128, activation=tf.nn.relu, name='c47_{}'.format(i))
+        did_win_latent = tf.layers.dense(did_win_latent1, 128, activation=tf.nn.relu, name='c47b_{}'.format(i))
         did_win_logits = tf.layers.dense(did_win_latent, 1, activation=None, name='c48_{}'.format(i))
         did_win_logits = tf.squeeze(did_win_logits, [1, 2])
     
@@ -245,13 +247,13 @@ def build_model(inference=False, num_players=1, learning_rate=None, fine_tune=Fa
     player_did_win_losses = [tf.reduce_mean(x) for x in tf.split(did_win_losses, num_players)]
     player_average_frame_losses = [tf.reduce_mean(x) for x in tf.split(average_frame_loss, num_players)]
     player_have_ship_average_frame_losses = [tf.reduce_mean(x) for x in tf.split(have_ship_average_frame_loss, num_players)]
-    player_total_losses = [x+0.03*y+0.3*z+0.05*w+0.1*k for x,y,z,w,k in zip(player_average_frame_losses, player_gen_losses, player_have_ship_average_frame_losses, player_should_construct_losses, player_did_win_losses)]
+    player_total_losses = [x+0.05*y+0.5*z+0.05*w+0.01*k for x,y,z,w,k in zip(player_average_frame_losses, player_gen_losses, player_have_ship_average_frame_losses, player_should_construct_losses, player_did_win_losses)]
     
     generate_losses = tf.reduce_mean(generate_losses) # TODO: do I need to add to frames before averaging?
     should_construct_losses = tf.reduce_mean(should_construct_losses) # TODO: do I need to add to frames before averaging?
     did_win_losses = tf.reduce_mean(did_win_losses) # TODO: do I need to add to frames before averaging?
 
-    loss = tf.reduce_mean(average_frame_loss) + 0.03*generate_losses + 0.3*tf.reduce_mean(have_ship_average_frame_loss) + 0.05*should_construct_losses + 0.1 * did_win_losses
+    loss = tf.reduce_mean(average_frame_loss) + 0.05*generate_losses + 0.5*tf.reduce_mean(have_ship_average_frame_loss) + 0.05*should_construct_losses + 0.01 * did_win_losses
 
     if fine_tune:
         update_ops = tf.get_collection(tf.GraphKeys.UPDATE_OPS)
