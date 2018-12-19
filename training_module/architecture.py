@@ -30,91 +30,91 @@ def build_model(inference=False, num_players=1, learning_rate=None, fine_tune=Fa
 
     moves = tf.one_hot(moves, 6)
 
-    ca = tf.layers.conv1d(opponent_features, 16, 1, activation=tf.nn.relu)
-    ca = tf.layers.conv1d(ca, 16, 1, activation=tf.nn.relu)
+    ca = tf.layers.conv1d(opponent_features, 16, 1, activation=tf.nn.leaky_relu)
+    ca = tf.layers.conv1d(ca, 16, 1, activation=tf.nn.leaky_relu)
     ca = tf.reduce_sum(ca, 1)
-    tl = tf.layers.dense(my_player_features, 32, activation=tf.nn.relu)
-    tl = tf.layers.dense(tl, 16, activation=tf.nn.relu)
+    tl = tf.layers.dense(my_player_features, 32, activation=tf.nn.leaky_relu)
+    tl = tf.layers.dense(tl, 16, activation=tf.nn.leaky_relu)
 
     ca = tf.expand_dims(ca, 1)
     ca = tf.expand_dims(ca, 1)
     tl = tf.expand_dims(tl, 1)
     tl = tf.expand_dims(tl, 1)
 
-    d_l2_a_1 = tf.layers.conv2d(frames, 32, 3, activation=tf.nn.relu, padding='same', name='c1') # 128
+    d_l2_a_1 = tf.layers.conv2d(frames, 32, 3, activation=tf.nn.leaky_relu, padding='same', name='c1') # 128
     d_l2_a_1 = tf.layers.batch_normalization(d_l2_a_1, training=is_training, name='bn1')
 
-    d_l2_p = tf.layers.conv2d(d_l2_a_1, 16, 3, strides=2, activation=tf.nn.relu, padding='same', name='c4') # 64; This might be incorrect -- too agressive downsampling considering the input size
+    d_l2_p = tf.layers.conv2d(d_l2_a_1, 16, 3, strides=2, activation=tf.nn.leaky_relu, padding='same', name='c4') # 64; This might be incorrect -- too agressive downsampling considering the input size
     d_l2_p = tf.layers.batch_normalization(d_l2_p, training=is_training, name='bn4')
 
-    d_l3_a = tf.layers.conv2d(d_l2_p, 16, 3, activation=tf.nn.relu, padding='same', name='c5')
+    d_l3_a = tf.layers.conv2d(d_l2_p, 16, 3, activation=tf.nn.leaky_relu, padding='same', name='c5')
     d_l3_a = tf.layers.batch_normalization(d_l3_a, training=is_training, name='bn5')
-    d_l3_p = tf.layers.conv2d(d_l3_a, 32, 3, strides=2, activation=tf.nn.relu, padding='same', name='c6') # 32
+    d_l3_p = tf.layers.conv2d(d_l3_a, 32, 3, strides=2, activation=tf.nn.leaky_relu, padding='same', name='c6') # 32
     d_l3_p = tf.layers.batch_normalization(d_l3_p, training=is_training, name='bn6')
 
-    d_l4_a = tf.layers.conv2d(d_l3_p, 16, 3, activation=tf.nn.relu, padding='same', name='c7')
+    d_l4_a = tf.layers.conv2d(d_l3_p, 16, 3, activation=tf.nn.leaky_relu, padding='same', name='c7')
     d_l4_a = tf.layers.batch_normalization(d_l4_a, training=is_training, name='bn7')
-    d_l4_p = tf.layers.conv2d(d_l4_a, 32, 3, strides=2, activation=tf.nn.relu, padding='same', name='c8') # 16
+    d_l4_p = tf.layers.conv2d(d_l4_a, 32, 3, strides=2, activation=tf.nn.leaky_relu, padding='same', name='c8') # 16
     d_l4_p = tf.layers.batch_normalization(d_l4_p, training=is_training, name='bn8')
 
-    d_l5_a = tf.layers.conv2d(d_l4_p, 16, 3, activation=tf.nn.relu, padding='same', name='c9')
+    d_l5_a = tf.layers.conv2d(d_l4_p, 16, 3, activation=tf.nn.leaky_relu, padding='same', name='c9')
     d_l5_a = tf.layers.batch_normalization(d_l5_a, training=is_training, name='bn9')
-    d_l5_p = tf.layers.conv2d(d_l5_a, 32, 3, strides=2, activation=tf.nn.relu, padding='same', name='c10') # 8
+    d_l5_p = tf.layers.conv2d(d_l5_a, 32, 3, strides=2, activation=tf.nn.leaky_relu, padding='same', name='c10') # 8
     d_l5_p = tf.layers.batch_normalization(d_l5_p, training=is_training, name='bn10')
 
-    d_l6_a = tf.layers.conv2d(d_l5_p, 32, 3, activation=tf.nn.relu, padding='same', name='c11')
+    d_l6_a = tf.layers.conv2d(d_l5_p, 32, 3, activation=tf.nn.leaky_relu, padding='same', name='c11')
     d_l6_a = tf.layers.batch_normalization(d_l6_a, training=is_training, name='bn11')
-    d_l6_p = tf.layers.conv2d(d_l6_a, 64, 3, strides=2, activation=tf.nn.relu, padding='same', name='c12') # 4
+    d_l6_p = tf.layers.conv2d(d_l6_a, 64, 3, strides=2, activation=tf.nn.leaky_relu, padding='same', name='c12') # 4
     d_l6_p = tf.layers.batch_normalization(d_l6_p, training=is_training, name='bn12')
 
-    d_l7_a = tf.layers.conv2d(d_l6_p, 64, 3, activation=tf.nn.relu, padding='same', name='c13')
+    d_l7_a = tf.layers.conv2d(d_l6_p, 64, 3, activation=tf.nn.leaky_relu, padding='same', name='c13')
     d_l7_a = tf.layers.batch_normalization(d_l7_a, training=is_training, name='bn13')
-    d_l7_p = tf.layers.conv2d(d_l7_a, 128, 3, strides=2, activation=tf.nn.relu, padding='same', name='c14') # 2
+    d_l7_p = tf.layers.conv2d(d_l7_a, 128, 3, strides=2, activation=tf.nn.leaky_relu, padding='same', name='c14') # 2
     d_l7_p = tf.layers.batch_normalization(d_l7_p, training=is_training, name='bn14')
 
-    d_l8_a_2 = tf.layers.conv2d(d_l7_p, 64, 3, activation=tf.nn.relu, padding='same', name='c16')
+    d_l8_a_2 = tf.layers.conv2d(d_l7_p, 64, 3, activation=tf.nn.leaky_relu, padding='same', name='c16')
     d_l8_a_2 = tf.layers.batch_normalization(d_l8_a_2, training=is_training, name='bn16')
-    d_l8_p = tf.layers.conv2d(d_l8_a_2, 128, 3, strides=2, activation=tf.nn.relu, padding='same', name='c17') # 1
+    d_l8_p = tf.layers.conv2d(d_l8_a_2, 128, 3, strides=2, activation=tf.nn.leaky_relu, padding='same', name='c17') # 1
     d_l8_p = tf.layers.batch_normalization(d_l8_p, training=is_training, name='bn17')
 
     final_state = tf.concat([d_l8_p, ca, tl], -1)
-    latent = tf.layers.dense(final_state, 512, activation=tf.nn.relu, name='c19')
+    latent = tf.layers.dense(final_state, 512, activation=tf.nn.leaky_relu, name='c19')
 
-    u_l8_a = tf.layers.conv2d_transpose(latent, 128, 3, 2, activation=tf.nn.relu, padding='same', name='c20') # 2
+    u_l8_a = tf.layers.conv2d_transpose(latent, 128, 3, 2, activation=tf.nn.leaky_relu, padding='same', name='c20') # 2
     u_l8_c = tf.concat([u_l8_a, d_l8_a_2], -1)
-    u_l8_s = tf.layers.conv2d(u_l8_c, 128, 3, activation=tf.nn.relu, padding='same', name='c21')
+    u_l8_s = tf.layers.conv2d(u_l8_c, 128, 3, activation=tf.nn.leaky_relu, padding='same', name='c21')
     u_l8_s = tf.layers.batch_normalization(u_l8_s, training=is_training, name='bn18')
 
-    u_l7_a = tf.layers.conv2d_transpose(u_l8_s, 128, 3, 2, activation=tf.nn.relu, padding='same', name='c22') # 4
+    u_l7_a = tf.layers.conv2d_transpose(u_l8_s, 128, 3, 2, activation=tf.nn.leaky_relu, padding='same', name='c22') # 4
     u_l7_c = tf.concat([u_l7_a, d_l7_a], -1)
-    u_l7_s = tf.layers.conv2d(u_l7_c, 128, 3, activation=tf.nn.relu, padding='same', name='c23')
+    u_l7_s = tf.layers.conv2d(u_l7_c, 128, 3, activation=tf.nn.leaky_relu, padding='same', name='c23')
     u_l7_s = tf.layers.batch_normalization(u_l7_s, training=is_training, name='bn19')
 
-    u_l6_a = tf.layers.conv2d_transpose(u_l7_s, 64, 3, 2, activation=tf.nn.relu, padding='same', name='c24') # 8
+    u_l6_a = tf.layers.conv2d_transpose(u_l7_s, 64, 3, 2, activation=tf.nn.leaky_relu, padding='same', name='c24') # 8
     u_l6_c = tf.concat([u_l6_a, d_l6_a], -1)
-    u_l6_s = tf.layers.conv2d(u_l6_c, 64, 3, activation=tf.nn.relu, padding='same', name='c25')
+    u_l6_s = tf.layers.conv2d(u_l6_c, 64, 3, activation=tf.nn.leaky_relu, padding='same', name='c25')
     u_l6_s = tf.layers.batch_normalization(u_l6_s, training=is_training, name='bn20')
 
-    u_l5_a = tf.layers.conv2d_transpose(u_l6_s, 64, 3, 2, activation=tf.nn.relu, padding='same', name='c26') # 16
+    u_l5_a = tf.layers.conv2d_transpose(u_l6_s, 64, 3, 2, activation=tf.nn.leaky_relu, padding='same', name='c26') # 16
     u_l5_c = tf.concat([u_l5_a, d_l5_a], -1)
-    u_l5_s = tf.layers.conv2d(u_l5_c, 64, 3, activation=tf.nn.relu, padding='same', name='c27')
+    u_l5_s = tf.layers.conv2d(u_l5_c, 64, 3, activation=tf.nn.leaky_relu, padding='same', name='c27')
     u_l5_s = tf.layers.batch_normalization(u_l5_s, training=is_training, name='bn21')
 
-    u_l4_a = tf.layers.conv2d_transpose(u_l5_s, 64, 3, 2, activation=tf.nn.relu, padding='same', name='c28') # 32
+    u_l4_a = tf.layers.conv2d_transpose(u_l5_s, 64, 3, 2, activation=tf.nn.leaky_relu, padding='same', name='c28') # 32
     u_l4_c = tf.concat([u_l4_a, d_l4_a], -1)
-    u_l4_s = tf.layers.conv2d(u_l4_c, 64, 3, activation=tf.nn.relu, padding='same', name='c29')
+    u_l4_s = tf.layers.conv2d(u_l4_c, 64, 3, activation=tf.nn.leaky_relu, padding='same', name='c29')
     u_l4_s = tf.layers.batch_normalization(u_l4_s, training=is_training, name='bn22')
 
-    u_l3_a = tf.layers.conv2d_transpose(u_l4_s, 64, 3, 2, activation=tf.nn.relu, padding='same', name='30') # 64
+    u_l3_a = tf.layers.conv2d_transpose(u_l4_s, 64, 3, 2, activation=tf.nn.leaky_relu, padding='same', name='30') # 64
     u_l3_c = tf.concat([u_l3_a, d_l3_a], -1)
-    u_l3_s = tf.layers.conv2d(u_l3_c, 64, 3, activation=tf.nn.relu, padding='same', name='c31')
+    u_l3_s = tf.layers.conv2d(u_l3_c, 64, 3, activation=tf.nn.leaky_relu, padding='same', name='c31')
     u_l3_s = tf.layers.batch_normalization(u_l3_s, training=is_training, name='bn23')
 
-    u_l2_a = tf.layers.conv2d_transpose(u_l3_s, 64, 3, 2, activation=tf.nn.relu, padding='same', name='c32') # 128
+    u_l2_a = tf.layers.conv2d_transpose(u_l3_s, 64, 3, 2, activation=tf.nn.leaky_relu, padding='same', name='c32') # 128
     u_l2_c = tf.concat([u_l2_a, d_l2_a_1], -1)
-    u_l2_s_1 = tf.layers.conv2d(u_l2_c, 128, 3, activation=tf.nn.relu, padding='same', name='c33')
+    u_l2_s_1 = tf.layers.conv2d(u_l2_c, 128, 3, activation=tf.nn.leaky_relu, padding='same', name='c33')
     u_l2_s_1 = tf.layers.batch_normalization(u_l2_s_1, training=is_training, name='bn24')
-    u_l2_s_2 = tf.layers.conv2d(u_l2_s_1, 128, 3, activation=tf.nn.relu, padding='same', name='c34')
+    u_l2_s_2 = tf.layers.conv2d(u_l2_s_1, 128, 3, activation=tf.nn.leaky_relu, padding='same', name='c34')
     u_l2_s_2 = tf.layers.batch_normalization(u_l2_s_2, training=is_training, name='bn25')
     
     player_generate_logits = []
@@ -124,23 +124,23 @@ def build_model(inference=False, num_players=1, learning_rate=None, fine_tune=Fa
     player_did_win_logits = []
     for i in range(num_players):
 
-        gen_latent1 = tf.layers.dense(latent, 128, activation=tf.nn.relu, name='c39_{}'.format(i))
-        gen_latent = tf.layers.dense(gen_latent1, 128, activation=tf.nn.relu, name='c39b_{}'.format(i))
+        gen_latent1 = tf.layers.dense(latent, 128, activation=tf.nn.leaky_relu, name='c39_{}'.format(i))
+        gen_latent = tf.layers.dense(gen_latent1, 128, activation=tf.nn.leaky_relu, name='c39b_{}'.format(i))
         generate_logits = tf.layers.dense(gen_latent, 1, activation=None, name='c40_{}'.format(i))
         generate_logits = tf.squeeze(generate_logits, [1, 2])
 
-        moves_latent = tf.layers.conv2d(u_l2_s_2, 64, 3, activation=tf.nn.relu, padding='same', name='c41_{}'.format(i)) # Try 1 kernel
+        moves_latent = tf.layers.conv2d(u_l2_s_2, 64, 3, activation=tf.nn.leaky_relu, padding='same', name='c41_{}'.format(i)) # Try 1 kernel
         moves_logits = tf.layers.conv2d(moves_latent, 6, 3, activation=None, padding='same', name='c42_{}'.format(i)) # Try 1 kernel
         
-        should_construct_latent = tf.layers.dense(latent, 64, activation=tf.nn.relu, name='c43_{}'.format(i))
+        should_construct_latent = tf.layers.dense(latent, 64, activation=tf.nn.leaky_relu, name='c43_{}'.format(i))
         should_construct_logits = tf.layers.dense(should_construct_latent, 1, activation=None, name='c44_{}'.format(i))
         should_construct_logits = tf.squeeze(should_construct_logits, [1, 2])
         
-        will_have_ship_latent = tf.layers.conv2d(u_l2_s_2, 64, 3, activation=tf.nn.relu, padding='same', name='c45_{}'.format(i)) # Try 1 kernel
+        will_have_ship_latent = tf.layers.conv2d(u_l2_s_2, 64, 3, activation=tf.nn.leaky_relu, padding='same', name='c45_{}'.format(i)) # Try 1 kernel
         will_have_ship_logits = tf.layers.conv2d(will_have_ship_latent, 1, 3, activation=None, padding='same', name='c46_{}'.format(i)) # Try 1 kernel
         
-        did_win_latent1 = tf.layers.dense(latent, 128, activation=tf.nn.relu, name='c47_{}'.format(i))
-        did_win_latent = tf.layers.dense(did_win_latent1, 128, activation=tf.nn.relu, name='c47b_{}'.format(i))
+        did_win_latent1 = tf.layers.dense(latent, 128, activation=tf.nn.leaky_relu, name='c47_{}'.format(i))
+        did_win_latent = tf.layers.dense(did_win_latent1, 128, activation=tf.nn.leaky_relu, name='c47b_{}'.format(i))
         did_win_logits = tf.layers.dense(did_win_latent, 1, activation=None, name='c48_{}'.format(i))
         did_win_logits = tf.squeeze(did_win_logits, [1, 2])
     
