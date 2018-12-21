@@ -282,7 +282,13 @@ class Game(object):
 
         ship_is_full = np.expand_dims(ship_is_full, -1)
 
-        frames = np.concatenate([production, has_ship, entity_energies, factories, has_dropoff, ship_is_full], axis=-1)
+        ship_id_feat = self.ship_ids * (my_ships>0.5)/50.
+
+        assert ship_id_feat.shape[0] == production.shape[0]
+
+        ship_id_feat = np.expand_dims(ship_id_feat, -1)
+
+        frames = np.concatenate([production, has_ship, entity_energies, factories, has_dropoff, ship_is_full, ship_id_feat], axis=-1)
 
         # Note: 'no-moves' do not need explicit assignment since 0 means 'still'
         # and the arrays are initialled with zero.
@@ -342,13 +348,6 @@ class Game(object):
         #num_opponent_ships = np.sum(has_ship < 0, axis=(1, 2))/50.
         num_opponent_ships = enemy_ship_counts/50.
         num_my_ships = np.sum(has_ship > 0, axis=(1, 2))/50.
-        
-        ship_id_feat = self.ship_ids * (my_ships>0.5)/50.
-
-        assert ship_id_feat.shape[0] == frames.shape[0]
-
-        ship_id_feat = np.expand_dims(ship_id_feat, -1)
-        frames = np.concatenate([frames, ship_id_feat], axis=-1)
         
         meta_features = np.array(list(map_size) +  [num_opponents])
 
