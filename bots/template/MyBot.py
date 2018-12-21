@@ -18,7 +18,7 @@ import numpy as np
 # Turning off logging doesn't seem to be working
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 import tensorflow as tf
-from tensorflow.python.client import device_lib
+#from tensorflow.python.client import device_lib
 
 #tf.logging.set_verbosity(tf.logging.WARN) # Turn this on before uploading
 #tf.logging.set_verbosity(0)
@@ -139,7 +139,7 @@ def update_frame(frame, num_players, my_id, map_dim, max_turns):
     enemy_ship_counts = np.array([opponents[x]['num_ships'] for x in op_ids])
 
     num_opponent_ships = enemy_ship_counts/50.
-    num_opponent_ships = np.expand_dims(num_opponent_ships, -1)
+    num_opponent_ships = np.expand_dims(num_opponent_ships, 0)
     num_my_ships = [len(my_ships)/50.]
         
     meta_features = np.array(list(map_size) +  [num_opponents])
@@ -163,7 +163,7 @@ def update_frame(frame, num_players, my_id, map_dim, max_turns):
     #
     my_player_features = np.concatenate([my_player_features, meta_features], -1)
 
-    return frame, turns_left_raw, my_player_features, opponent_features, my_ships, has_ship, my_halite, my_dropoffs, enemy_dropoffs
+    return frame, turns_left_raw, my_player_features, opponent_features, my_ships, has_ship, _my_halite, my_dropoffs, enemy_dropoffs
 
 def get_initial_data():
     raw_constants = input()
@@ -231,7 +231,9 @@ with tf.Session(config=config) as sess:
                                     level=logging.DEBUG)
 
     frame = np.zeros((map_dim, map_dim, 7), dtype=np.float32)
-    frame[:, :, 0] = halite
+    frame[:, :, 0] = halite.copy()
+
+    del halite
     
     enemy_shipyards = []
     
@@ -244,6 +246,8 @@ with tf.Session(config=config) as sess:
             frame[shipyard_y, shipyard_x, 3] = -1.
             enemy_shipyards.append((shipyard_y, shipyard_x))
 
+    del player_tups
+
     # Prime the GPU
     feed_dict = {frames_node: np.zeros((1, 128, 128, 7), dtype=np.float32),
                  my_player_features_node: np.zeros((1, 12), dtype=np.float32),
@@ -253,6 +257,8 @@ with tf.Session(config=config) as sess:
 
     for _ in range(1):
         _ = sess.run([moves_node, generate_node], feed_dict=feed_dict)
+
+    del feed_dict
 
     # Send name
     print("jstaker7", flush=True)
@@ -287,26 +293,138 @@ with tf.Session(config=config) as sess:
 
         mo, go, ho, bo, wo = sess.run([m_probs, generate_node, h_logits, b_logits, w_logits], feed_dict=feed_dict)
 
-        logging.info(np.squeeze(wo))
+        del feed_dict
+        del _frame
+        del my_player_features
+        del opponent_features
 
-        mo = mo[1]
-        go = go[1]
+        #logging.info(wo)
+
+        which = np.argmax(np.squeeze(wo))
+
+        #logging.info(which)
+
+        mo = mo[which]
+        go = go[which]
+        bo = np.squeeze(bo[which])
 
         # TODO: Also get the game state to determine the player to use
 
-        go = np.squeeze(go) > 0 # Raw number, 0 is sigmoid()=0.5
+        go = np.squeeze(go) > 0 # Raw number, 0 is sigmoid()=0.5 # TODO: double check this
         
         mo = mo[0, lyp:-ryp, lxp:-rxp] # reverse pad
+        ho = ho[0, lyp:-ryp, lxp:-rxp] # reverse pad
         
         #highest_confidence = np.max(mo, -1)
         #highest_confidence_loc = np.argmax(highest_confidence, [0, 1])
 
         mo = np.roll(mo, -shift[0], axis=0) # reverse center
         mo = np.roll(mo, -shift[1], axis=1) # reverse center
+
+        ho = np.roll(ho, -shift[0], axis=0) # reverse center
+        ho = np.roll(ho, -shift[1], axis=1) # reverse center
+
+        _ho = ho.copy()
+
+        ho = ho > 0 # TODO: double check
+        
+        logging.info(np.sum(ho))
+
+        if np.sum(ho) > 0:
+            h_y, h_x = np.where(ho)
+            have_ship = list(zip(h_y, h_x))
+        else:
+            have_ship = []
+
+        # Sort by confidence (important for crowded areas)
+        _have_ship = []
+        for hs in have_ship:
+            y, x = hs
+            _have_ship.append((y, x, _ho[y, x]))
+        have_ship = _have_ship
+
+        have_ship = sorted(have_ship, key=lambda x: -x[2])
+
+        logging.info(have_ship)
+
+        del ho
+        del _ho
+
+        # turn my_ships into a dict for easier tiered processing
+        # TODO: move this to the function above
+        _my_ships = {}
+        for ship in my_ships:
+            _my_ships[ship[0]] = ship
+
+        my_ships = _my_ships
+
+        constructed = False
+
+        commands = []
+
+        # TODO: put const here first
+        logging.info('build')
+        logging.info(bo)
+        if bo > 0 and my_halite >= 4000:
+            best_ship = None
+            best_conf = -9999
+            best_move = None
+            ix = 5
+            for ship in my_ships:
+                id, x, y, h = ship
+                logging.info('cin')
+                conf = mo[y, x, ix].copy()
+                if conf > best_conf:
+                    best_conf = conf
+                    best_move = valid_moves[ix]
+                    best_ship = id
+
+            if best_ship is not None:
+                logging.info('cout')
+                logging.info(best_ship)
+                logging.info(best_conf)
+                logging.info(best_move)
+
+                move_cmd = "c {}".format(best_ship)
+                commands.append(move_cmd)
+                my_halite -= 4000
+                constructed = True
+                
+                logging.info(len(my_ships))
+                del my_ships[best_ship]
+                logging.info(len(my_ships))
+
+        for loc in have_ship:
+            best_ship = None
+            best_conf = -9999
+            best_move = None
+            for ship in my_ships:
+                id, x, y, h = ship
+                for ix, (y_s, x_s) in enumerate(move_shifts):
+                    s_loc = (y + y_s)%map_dim, (x + x_s)%map_dim
+                    if loc == s_loc:
+                        logging.info('in')
+                        conf = mo[y, x, ix].copy()
+                        if conf > best_conf and can_afford_to_move[y, x]:
+                            best_conf = conf
+                            best_move = valid_moves[ix]
+                            best_ship = id
+            if best_ship is not None:
+                logging.info('out')
+                logging.info(best_ship)
+                logging.info(best_conf)
+                logging.info(best_move)
+
+                move_cmd = "m {} {}".format(best_ship, best_move)
+                commands.append(move_cmd)
+                logging.info(len(my_ships))
+                del my_ships[best_ship]
+                logging.info(len(my_ships))
+
         
         assert mo.shape[0] == mo.shape[1] == map_dim
 
-        commands = []
+
         
         # Attempt to reduce collisions. This is a heuristic that I'd love to
         # be handled through the learning process.
@@ -317,29 +435,27 @@ with tf.Session(config=config) as sess:
         # Filter out moves when they can't be afforded
         _my_ships = []
         for ship in my_ships:
-            id, x, y, h = ship
+            id, x, y, h = my_ships[ship]
             a = can_afford_to_move[y, x]
             c = max(mo[y, x])
             _my_ships.append((id, x, y, h, a, c))
 
-        my_ships = sorted(_my_ships, key=lambda x: (x[4], -x[5]))
+        my_ships = sorted(_my_ships, key=lambda x: (x[4], -x[5], x[0]))
 
-        constructed = False
-        
         for ship in my_ships:
             id, x, y, h, a, _ = ship
             
             #ranked_choices = sorted(list(zip(valid_moves, mo[y, x])), key=lambda x: x[1], reverse=True)
             
             probs = mo[y, x].copy()
-            probs = [np.random.uniform(0, i) for i in probs]
+            #probs = [np.random.uniform(0, i) for i in probs] # TODO: Do I really want to sample moves at this point?
             ranked_choices = sorted(list(zip(valid_moves, probs)), key=lambda x: x[1], reverse=True)
             
             for choice in ranked_choices:
                 m, _ = choice # don't need probability for now
             
                 # TODO: only allow 1 construction per turn?
-                if m == 'c' and (my_halite) >= 4000 and (y, x) not in already_taken and not constructed: # TODO: halite on cell and in ship can technically be included
+                if m == 'c' and (my_halite) >= 4000 and (y, x) not in already_taken and not constructed: # TODO: halite on cell and in ship can technically be included; already taken is a problem here; should construct first
                     move_cmd = "c {}".format(id)
                     commands.append(move_cmd)
                     my_halite -= 4000
