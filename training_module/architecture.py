@@ -205,16 +205,21 @@ def build_model(inference=False, num_players=1, learning_rate=None, fine_tune=Fa
         kernel = np.expand_dims(kernel, -2)
 
         kernel = tf.convert_to_tensor(kernel, np.float32)
-
+        
         have_ship_mask = tf.nn.conv2d(my_ships, kernel, [1, 1, 1, 1], 'SAME')
         have_ship_mask = tf.stop_gradient(have_ship_mask)
+    
+    
     else:
         have_ship_mask = tf.constant(np.ones((1, 128, 128, 5)))
 
     have_ship_mask = tf.reduce_sum(have_ship_mask, -1) #> 0.5
+
     have_ship_mask = tf.greater(have_ship_mask, 0.5)
 
     have_ship_mask = tf.cast(have_ship_mask, 'float32')
+
+
 
     have_ship_mask = tf.expand_dims(have_ship_mask, -1)
 
@@ -224,6 +229,7 @@ def build_model(inference=False, num_players=1, learning_rate=None, fine_tune=Fa
 #    dsffs
     # TODO: Do a serious look at all the shapes and ensure things are proper
     have_ship_losses = have_ship_losses * have_ship_mask
+    #tf.add_to_collection('temp', have_ship_losses)
 
     ships_per_frame = tf.reduce_sum(my_ships, axis=[1, 2])
 

@@ -76,6 +76,15 @@ PLAYERS = [
              },
 ]
 
+#PLAYERS = [
+#            {'pname': 'Counterbalance',
+#             'versions': list(range(200)),
+#             },
+#            {'pname': 'Hjax',
+#             'versions': list(range(200)),
+#             },
+#]
+
 in_train = set()
 in_valid = set()
 
@@ -151,6 +160,10 @@ for player in PLAYERS:
 min_buffer_size = 5000
 max_buffer_size = 8000
 batch_size = 16
+
+#min_buffer_size = 500
+#max_buffer_size = 800
+#batch_size = 2
 
 
 def batch_prep(buffer, batch_queue):
@@ -418,6 +431,16 @@ try:
                          should_construct_node: b_batch,
                          did_win_node: w_batch
                         }
+
+#            temp_node = tf.get_collection('temp')[0]
+#            print(f_batch[0, 55:65, 55:65, 1])
+#            print(m_batch[0, 55:65, 55:65, 0])
+#            temp = sess.run([temp_node], feed_dict=feed_dict)
+#            print(temp[0][0, 55:65, 55:65])
+#            print('fannty')
+#            import time
+#            time.sleep(1)
+#            continue
 
             loss, _ = sess.run([loss_node, optimizer_node], feed_dict=feed_dict)
             reg_loss = 0
