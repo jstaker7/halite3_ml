@@ -304,7 +304,7 @@ for player in PLAYERS:
 
 learning_rate = tf.placeholder(tf.float32, shape=[])
 
-build_model(num_players=len(PLAYERS), learning_rate=learning_rate)
+build_model(num_players=len(PLAYERS), learning_rate=learning_rate, fine_tune=True)
 
 frames_node = tf.get_collection('frames')[0]
 opponent_features_node = tf.get_collection('opponent_features')[0]
@@ -389,7 +389,7 @@ try:
                 M = T/20000
                 t = step
                 #lr = (0.001/2.)*(np.cos(np.pi*np.mod(t - 1, T/M)/(T/M)) + 1)
-                lr = 0.00005
+                lr = 0.0005
 
                 feed_dict = {frames_node: f_batch,
                              my_player_features_node: c_batch,
@@ -409,7 +409,7 @@ try:
                 losses.append(loss)
                 reg_losses.append(reg_loss)
                 
-            if step % 100 == 0:
+            if step % 1000 == 0:
                 player_gen_losses = []
                 player_average_frame_losses = []
                 player_total_losses = []
@@ -458,9 +458,6 @@ try:
                     player_have_ship_losses.append(hs_loss)
                     player_should_construct_losses.append(b_loss)
                     player_did_win_losses.append(w_loss)
-                    
-                    if step == 0 and vstep == 5:
-                        break
             
                 player_gen_losses = np.stack(player_gen_losses, 1)
                 player_average_frame_losses = np.stack(player_average_frame_losses, 1)
