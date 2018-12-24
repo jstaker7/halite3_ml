@@ -2,7 +2,6 @@ import pickle
 import gzip
 import time
 from random import shuffle
-#from multiprocessing import Process, Queue
 import os
 from threading import Thread
 from queue import Queue, PriorityQueue
@@ -17,37 +16,8 @@ from training_module.architecture import build_model
 
 np.random.seed(8)
 
-RESTORE = False#True
+RESTORE = True
 RESTORE_WHICH = '4'
-
-# Given history of frames
-# 1) Predict which player is which
-# 2) Keep a history vector
-# 4)
-
-# U-net convolve
-# Latent vector gets passed into RNN to update state
-# U-net deconvolve + state to make pixel predictions
-# Truncated history of only X frames (to both decorrelate, and b/c that much
-# histrory won't affect the bots much.
-# Once a model is trained on top N players, us RL to select which player to
-# base the next move off of.
-# Consider pretraining the u-net (or ladder net style) with more data if needed.
-# Fine-tune train as player bots get updated
-
-#receptive_field_size = 3
-
-# Ensure that the frame wraps along edges
-
-# Potentially learn a reconstruction error to capture many states (of gold only)
-
-# Start with greedy (single convolution)
-
-# load the replay index
-#with gzip.open('/Users/Peace/Desktop/replays/INDEX.pkl', 'rb') as infile:
-#    master_index = pickle.load(infile)
-#
-#print(master_index.keys())
 
 replay_root = '/Users/Peace/Desktop/replays'
 
@@ -64,20 +34,16 @@ with gzip.open(os.path.join(replay_root, 'INDEX.pkl'), 'rb') as infile:
 
 PLAYERS = [
             {'pname': 'TheDuck314',
-             'versions': [30, 31, 33, 34, 35, 36, 39, 40, 41, 42, 43, 44, 47, 48, 50, 52],
+             'versions': [53],
              },
            
             {'pname': 'teccles',
-             'versions': list(range(96, 104)) + [105, 107, 108, 128, 130] + list(range(111, 117)) + list(range(118, 127)),
-             },
-           
-            {'pname': 'cowzow',
-             'versions': [8, 9],
+             'versions': [131],
              },
 
-#            {'pname': 'reCurs3',
-#             'versions': [113, 114, 115, 117, 120, 125, 126, 127, 128],
-#             },
+            {'pname': 'reCurs3',
+             'versions': [159],
+             },
 ]
 
 #PLAYERS = [
@@ -392,72 +358,66 @@ try:
         losses = []
         reg_losses = []
         for step in range(20000000):
-            player_batches = []
-            for player in PLAYERS:
-                batch = player['batch_q'].get()
-                player_batches.append(batch)
-            
-            if len(PLAYERS) == 1:
-                assert False # Only focusing on multiple players from now on
-                f_batch, m_batch, g_batch, c_batch, t_batch, s_batch = batch
-            else:
-                batch = [np.concatenate(x, 0) for x in zip(*player_batches)]
-                shapes = [x.shape[0] for x in batch]
-                assert len(set(shapes)) == 1
-                f_batch, m_batch, g_batch, c_batch, t_batch, s_batch, h_batch, b_batch, w_batch = batch
+            if step != 0:
+                player_batches = []
+                for player in PLAYERS:
+                    batch = player['batch_q'].get()
+                    player_batches.append(batch)
+                
+                if len(PLAYERS) == 1:
+                    assert False # Only focusing on multiple players from now on
+                    f_batch, m_batch, g_batch, c_batch, t_batch, s_batch = batch
+                else:
+                    batch = [np.concatenate(x, 0) for x in zip(*player_batches)]
+                    shapes = [x.shape[0] for x in batch]
+                    assert len(set(shapes)) == 1
+                    f_batch, m_batch, g_batch, c_batch, t_batch, s_batch, h_batch, b_batch, w_batch = batch
 
-            g_batch = np.expand_dims(g_batch, -1)
-            m_batch = np.expand_dims(m_batch, -1)
-            s_batch = np.expand_dims(s_batch, -1)
-            h_batch = np.expand_dims(h_batch, -1)
-            b_batch = np.expand_dims(b_batch, -1)
-            w_batch = np.expand_dims(w_batch, -1)
-            
+                g_batch = np.expand_dims(g_batch, -1)
+                m_batch = np.expand_dims(m_batch, -1)
+                s_batch = np.expand_dims(s_batch, -1)
+                h_batch = np.expand_dims(h_batch, -1)
+                b_batch = np.expand_dims(b_batch, -1)
+                w_batch = np.expand_dims(w_batch, -1)
+                
 
-            #print([x.shape for x in [f_batch, m_batch, g_batch, c_batch, t_batch, s_batch]])
-            
-            #print(np.sum(s_batch))
-            
-            T = 400000
-            M = T/20000
-            t = step
-            lr = (0.001/2.)*(np.cos(np.pi*np.mod(t - 1, T/M)/(T/M)) + 1)
+                #print([x.shape for x in [f_batch, m_batch, g_batch, c_batch, t_batch, s_batch]])
+                
+                #print(np.sum(s_batch))
+                
+                T = 400000
+                M = T/20000
+                t = step
+                #lr = (0.001/2.)*(np.cos(np.pi*np.mod(t - 1, T/M)/(T/M)) + 1)
+                lr = 0.00005
 
-            feed_dict = {frames_node: f_batch,
-                         my_player_features_node: c_batch,
-                         opponent_features_node: t_batch,
-                         my_ships_node: s_batch,
-                         moves_node: m_batch,
-                         generate_node: g_batch,
-                         is_training: True,
-                         learning_rate: lr,
-                         will_have_ship_node: h_batch,
-                         should_construct_node: b_batch,
-                         did_win_node: w_batch
-                        }
+                feed_dict = {frames_node: f_batch,
+                             my_player_features_node: c_batch,
+                             opponent_features_node: t_batch,
+                             my_ships_node: s_batch,
+                             moves_node: m_batch,
+                             generate_node: g_batch,
+                             is_training: True,
+                             learning_rate: lr,
+                             will_have_ship_node: h_batch,
+                             should_construct_node: b_batch,
+                             did_win_node: w_batch
+                            }
 
-#            temp_node = tf.get_collection('temp')[0]
-#            print(f_batch[0, 55:65, 55:65, 1])
-#            print(m_batch[0, 55:65, 55:65, 0])
-#            temp = sess.run([temp_node], feed_dict=feed_dict)
-#            print(temp[0][0, 55:65, 55:65])
-#            print('fannty')
-#            import time
-#            time.sleep(1)
-#            continue
-
-            loss, _ = sess.run([loss_node, optimizer_node], feed_dict=feed_dict)
-            reg_loss = 0
-            losses.append(loss)
-            reg_losses.append(reg_loss)
-            if step % 5000 == 0:
+                loss, _ = sess.run([loss_node, optimizer_node], feed_dict=feed_dict)
+                reg_loss = 0
+                losses.append(loss)
+                reg_losses.append(reg_loss)
+                
+            if step % 100 == 0:
                 player_gen_losses = []
                 player_average_frame_losses = []
                 player_total_losses = []
                 player_have_ship_losses = []
                 player_should_construct_losses = []
                 player_did_win_losses = []
-                for vstep in range(3000):
+                
+                for vstep in range(6000):
                 
                     player_batches = []
                     for player in PLAYERS:

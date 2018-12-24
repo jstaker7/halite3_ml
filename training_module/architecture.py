@@ -264,7 +264,7 @@ def build_model(inference=False, num_players=1, learning_rate=None, fine_tune=Fa
     if fine_tune:
         update_ops = tf.get_collection(tf.GraphKeys.UPDATE_OPS)
         with tf.control_dependencies(update_ops):
-            optimizer = tf.train.MomentumOptimizer(learning_rate, 0.9, use_nesterov=True).minimize(loss)
+            optimizer = tf.train.MomentumOptimizer(learning_rate, 0.9, use_nesterov=False).minimize(loss)
 
     else:
         vars = [tf.nn.l2_loss(v) for v in tf.trainable_variables()
