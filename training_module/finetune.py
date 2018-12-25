@@ -388,8 +388,8 @@ try:
                 T = 400000
                 M = T/20000
                 t = step
-                #lr = (0.001/2.)*(np.cos(np.pi*np.mod(t - 1, T/M)/(T/M)) + 1)
-                lr = 0.0005
+                lr = (0.001/2.)*(np.cos(np.pi*np.mod(t - 1, T/M)/(T/M)) + 1)
+                #lr = 0.0005
 
                 feed_dict = {frames_node: f_batch,
                              my_player_features_node: c_batch,
@@ -409,7 +409,7 @@ try:
                 losses.append(loss)
                 reg_losses.append(reg_loss)
                 
-            if step % 1000 == 0:
+            if step % 5000 == 0:
                 player_gen_losses = []
                 player_average_frame_losses = []
                 player_total_losses = []

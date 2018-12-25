@@ -261,7 +261,7 @@ def build_model(inference=False, num_players=1, learning_rate=None, fine_tune=Fa
 
     loss = tf.reduce_mean(average_frame_loss) + 0.05*generate_losses + 0.5*tf.reduce_mean(have_ship_average_frame_loss) + 0.05*should_construct_losses + 0.01 * did_win_losses
 
-    if fine_tune:
+    if False:#fine_tune:
         update_ops = tf.get_collection(tf.GraphKeys.UPDATE_OPS)
         with tf.control_dependencies(update_ops):
             optimizer = tf.train.MomentumOptimizer(learning_rate, 0.9, use_nesterov=False).minimize(loss)
