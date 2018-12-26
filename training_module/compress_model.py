@@ -4,11 +4,11 @@ import tensorflow as tf
 
 from training_module.architecture import build_model
 
-build_model(True)
+build_model(True, 3)
 
 #root = '/Users/Peace/Projects/halite3_ml/bots/duck_larger/'
 #root = '/Users/Peace/Documents/models'
-root = '/Users/Peace/Projects/20'
+root = '/Users/Peace/Projects/m2'
 
 with tf.Session() as sess:
     saver = tf.train.Saver()

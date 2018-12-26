@@ -63,17 +63,18 @@ with gzip.open(os.path.join(replay_root, 'INDEX.pkl'), 'rb') as infile:
     master_index = pickle.load(infile)
 
 PLAYERS = [
-            {'pname': 'TheDuck314',
-             'versions': [30, 31, 33, 34, 35, 36, 39, 40, 41, 42, 43, 44, 47, 48, 50, 52],
-             },
+#            {'pname': 'TheDuck314',
+#             'versions': [30, 31, 33, 34, 35, 36, 39, 40, 41, 42, 43, 44, 47, 48, 50, 52],
+#             },
            
             {'pname': 'teccles',
-             'versions': list(range(96, 104)) + [105, 107, 108, 128, 130] + list(range(111, 117)) + list(range(118, 127)),
+#             'versions': list(range(96, 104)) + [105, 107, 108, 128, 130] + list(range(111, 117)) + list(range(118, 127)),
+             'versions': [131],
              },
            
-            {'pname': 'cowzow',
-             'versions': [8, 9],
-             },
+#            {'pname': 'cowzow',
+#             'versions': [8, 9],
+#             },
 
 #            {'pname': 'reCurs3',
 #             'versions': [113, 114, 115, 117, 120, 125, 126, 127, 128],
@@ -397,7 +398,7 @@ try:
                 batch = player['batch_q'].get()
                 player_batches.append(batch)
             
-            if len(PLAYERS) == 1:
+            if False:#len(PLAYERS) == 1:
                 assert False # Only focusing on multiple players from now on
                 f_batch, m_batch, g_batch, c_batch, t_batch, s_batch = batch
             else:
@@ -464,7 +465,7 @@ try:
                         batch = player['v_batch_q'].get()
                         player_batches.append(batch)
                     
-                    if len(PLAYERS) == 1:
+                    if False:#len(PLAYERS) == 1:
                         assert False
                         f_batch, m_batch, g_batch, c_batch, t_batch, s_batch = batch
                     else:

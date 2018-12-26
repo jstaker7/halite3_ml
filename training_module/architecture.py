@@ -160,9 +160,8 @@ def build_model(inference=False, num_players=1, learning_rate=None, fine_tune=Fa
     tf.add_to_collection('b_logits', tf.stack(player_should_construct_logits))
     tf.add_to_collection('w_logits', tf.stack(player_did_win_logits))
     
-#    if inference:
-#        assert False
-#        return
+    if inference:
+        return
 
     # TODO: Can be improved with gather_nd
     moves_logits = [tf.split(x, num_players) for x in player_move_logits]
@@ -259,7 +258,8 @@ def build_model(inference=False, num_players=1, learning_rate=None, fine_tune=Fa
     should_construct_losses = tf.reduce_mean(should_construct_losses) # TODO: do I need to add to frames before averaging?
     did_win_losses = tf.reduce_mean(did_win_losses) # TODO: do I need to add to frames before averaging?
 
-    loss = tf.reduce_mean(average_frame_loss) + 0.05*generate_losses + 0.5*tf.reduce_mean(have_ship_average_frame_loss) + 0.05*should_construct_losses + 0.01 * did_win_losses
+#    loss = tf.reduce_mean(average_frame_loss) + 0.05*generate_losses + 0.5*tf.reduce_mean(have_ship_average_frame_loss) + 0.05*should_construct_losses + 0.01 * did_win_losses
+    loss = tf.reduce_mean(average_frame_loss) + 0.0000000005*generate_losses + 0.0000000005*tf.reduce_mean(have_ship_average_frame_loss) + 0.0000000005*should_construct_losses + 0.0000000000001 * did_win_losses
 
     if False:#fine_tune:
         update_ops = tf.get_collection(tf.GraphKeys.UPDATE_OPS)
