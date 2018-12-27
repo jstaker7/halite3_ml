@@ -63,18 +63,20 @@ with gzip.open(os.path.join(replay_root, 'INDEX.pkl'), 'rb') as infile:
     master_index = pickle.load(infile)
 
 PLAYERS = [
-#            {'pname': 'TheDuck314',
-#             'versions': [30, 31, 33, 34, 35, 36, 39, 40, 41, 42, 43, 44, 47, 48, 50, 52],
-#             },
+            {'pname': 'TheDuck314',
+             #'versions': [30, 31, 33, 34, 35, 36, 39, 40, 41, 42, 43, 44, 47, 48, 50, 52],
+             'versions': [52],
+             },
            
             {'pname': 'teccles',
 #             'versions': list(range(96, 104)) + [105, 107, 108, 128, 130] + list(range(111, 117)) + list(range(118, 127)),
              'versions': [131],
              },
            
-#            {'pname': 'cowzow',
-#             'versions': [8, 9],
-#             },
+            {'pname': 'cowzow',
+             #'versions': [8, 9],
+             'versions': [9],
+             },
 
 #            {'pname': 'reCurs3',
 #             'versions': [113, 114, 115, 117, 120, 125, 126, 127, 128],
@@ -398,14 +400,10 @@ try:
                 batch = player['batch_q'].get()
                 player_batches.append(batch)
             
-            if False:#len(PLAYERS) == 1:
-                assert False # Only focusing on multiple players from now on
-                f_batch, m_batch, g_batch, c_batch, t_batch, s_batch = batch
-            else:
-                batch = [np.concatenate(x, 0) for x in zip(*player_batches)]
-                shapes = [x.shape[0] for x in batch]
-                assert len(set(shapes)) == 1
-                f_batch, m_batch, g_batch, c_batch, t_batch, s_batch, h_batch, b_batch, w_batch = batch
+            batch = [np.concatenate(x, 0) for x in zip(*player_batches)]
+            shapes = [x.shape[0] for x in batch]
+            assert len(set(shapes)) == 1
+            f_batch, m_batch, g_batch, c_batch, t_batch, s_batch, h_batch, b_batch, w_batch = batch
 
             g_batch = np.expand_dims(g_batch, -1)
             m_batch = np.expand_dims(m_batch, -1)
@@ -420,7 +418,7 @@ try:
             #print(np.sum(s_batch))
             
             T = 400000
-            M = T/20000
+            M = 4 #T/20000
             t = step
             lr = (0.001/2.)*(np.cos(np.pi*np.mod(t - 1, T/M)/(T/M)) + 1)
 
@@ -464,13 +462,9 @@ try:
                     for player in PLAYERS:
                         batch = player['v_batch_q'].get()
                         player_batches.append(batch)
-                    
-                    if False:#len(PLAYERS) == 1:
-                        assert False
-                        f_batch, m_batch, g_batch, c_batch, t_batch, s_batch = batch
-                    else:
-                        batch = [np.concatenate(x, 0) for x in zip(*player_batches)]
-                        f_batch, m_batch, g_batch, c_batch, t_batch, s_batch, h_batch, b_batch, w_batch = batch
+                
+                    batch = [np.concatenate(x, 0) for x in zip(*player_batches)]
+                    f_batch, m_batch, g_batch, c_batch, t_batch, s_batch, h_batch, b_batch, w_batch = batch
     
                     g_batch = np.expand_dims(g_batch, -1)
                     m_batch = np.expand_dims(m_batch, -1)
