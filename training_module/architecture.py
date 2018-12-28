@@ -40,17 +40,28 @@ def build_model(inference=False, num_players=1, learning_rate=None, fine_tune=Fa
     ca = tf.expand_dims(ca, 1)
     tl = tf.expand_dims(tl, 1)
     tl = tf.expand_dims(tl, 1)
+    
+    MAXPOOL = False
 
     d_l2_a_1 = tf.layers.conv2d(frames, 32, 3, activation=tf.nn.relu, padding='same', name='c1') # 128
-    d_l2_a_1 = tf.layers.batch_normalization(d_l2_a_1, training=is_training, name='bn1')
+    if MAXPOOL:
+        d_l2_p = tf.nn.max_pool(d_l2_a_1, [1, 2, 2, 1], [1, 2, 2, 1], 'SAME')
+        d_l2_p = tf.layers.batch_normalization(d_l2_p, training=is_training, name='bn1')
+    else:
+        d_l2_a_1 = tf.layers.batch_normalization(d_l2_a_1, training=is_training, name='bn1')
 
-    d_l2_p = tf.layers.conv2d(d_l2_a_1, 16, 3, strides=2, activation=tf.nn.relu, padding='same', name='c4') # 64; This might be incorrect -- too agressive downsampling considering the input size
-    d_l2_p = tf.layers.batch_normalization(d_l2_p, training=is_training, name='bn4')
+        d_l2_p = tf.layers.conv2d(d_l2_a_1, 16, 3, strides=2, activation=tf.nn.relu, padding='same', name='c4') # 64; This might be incorrect -- too agressive downsampling considering the input size
+        d_l2_p = tf.layers.batch_normalization(d_l2_p, training=is_training, name='bn4')
 
     d_l3_a = tf.layers.conv2d(d_l2_p, 16, 3, activation=tf.nn.relu, padding='same', name='c5')
-    d_l3_a = tf.layers.batch_normalization(d_l3_a, training=is_training, name='bn5')
-    d_l3_p = tf.layers.conv2d(d_l3_a, 32, 3, strides=2, activation=tf.nn.relu, padding='same', name='c6') # 32
-    d_l3_p = tf.layers.batch_normalization(d_l3_p, training=is_training, name='bn6')
+    
+    if MAXPOOL:
+        d_l3_p = tf.nn.max_pool(d_l3_a, [1, 2, 2, 1], [1, 2, 2, 1], 'SAME')
+        d_l3_p = tf.layers.batch_normalization(d_l3_p, training=is_training, name='bn5')
+    else:
+        d_l3_a = tf.layers.batch_normalization(d_l3_a, training=is_training, name='bn5')
+        d_l3_p = tf.layers.conv2d(d_l3_a, 32, 3, strides=2, activation=tf.nn.relu, padding='same', name='c6') # 32
+        d_l3_p = tf.layers.batch_normalization(d_l3_p, training=is_training, name='bn6')
 
     d_l4_a = tf.layers.conv2d(d_l3_p, 16, 3, activation=tf.nn.relu, padding='same', name='c7')
     d_l4_a = tf.layers.batch_normalization(d_l4_a, training=is_training, name='bn7')
@@ -117,17 +128,20 @@ def build_model(inference=False, num_players=1, learning_rate=None, fine_tune=Fa
     u_l2_s_2 = tf.layers.conv2d(u_l2_s_1, 128, 3, activation=tf.nn.relu, padding='same', name='c34')
     u_l2_s_2 = tf.layers.batch_normalization(u_l2_s_2, training=is_training, name='bn25')
     
-    i = 999
-    moves_latent1 = tf.layers.conv2d(u_l2_s_2, 128, 3, activation=tf.nn.relu, padding='same', name='c41_{}'.format(i)) # Try 1 kernel
-    moves_latent1 = tf.layers.batch_normalization(moves_latent1, training=is_training, name='bn26')
-    moves_latent2 = tf.layers.conv2d(moves_latent1, 128, 3, activation=tf.nn.relu, padding='same', name='c41b_{}'.format(i)) # Try 1 kernel
-    moves_latent2 = tf.layers.batch_normalization(moves_latent2, training=is_training, name='bn27')
-    
-    will_have_ship_latent1 = tf.layers.conv2d(u_l2_s_2, 128, 3, activation=tf.nn.relu, padding='same', name='c45_{}'.format(i)) # Try 1 kernel
-    will_have_ship_latent1 = tf.layers.batch_normalization(will_have_ship_latent1, training=is_training, name='bn28')
-    will_have_ship_latent2 = tf.layers.conv2d(will_have_ship_latent1, 128, 3, activation=tf.nn.relu, padding='same', name='c45b_{}'.format(i)) # Try 1 kernel
-    will_have_ship_latent2 = tf.layers.batch_normalization(will_have_ship_latent2, training=is_training, name='bn29')
-    
+#    i = 999
+#    moves_latent1 = tf.layers.conv2d(u_l2_s_2, 128, 3, activation=tf.nn.relu, padding='same', name='c41_{}'.format(i))
+#    moves_latent1 = tf.layers.batch_normalization(moves_latent1, training=is_training, name='bn26')
+#    moves_latent2 = tf.layers.conv2d(moves_latent1, 128, 3, activation=tf.nn.relu, padding='same', name='c41b_{}'.format(i))
+#    moves_latent2 = tf.layers.batch_normalization(moves_latent2, training=is_training, name='bn27')
+#
+#    will_have_ship_latent1 = tf.layers.conv2d(u_l2_s_2, 128, 3, activation=tf.nn.relu, padding='same', name='c45_{}'.format(i))
+#    will_have_ship_latent1 = tf.layers.batch_normalization(will_have_ship_latent1, training=is_training, name='bn28')
+#    will_have_ship_latent2 = tf.layers.conv2d(will_have_ship_latent1, 128, 3, activation=tf.nn.relu, padding='same', name='c45b_{}'.format(i))
+#    will_have_ship_latent2 = tf.layers.batch_normalization(will_have_ship_latent2, training=is_training, name='bn29')
+
+    moves_latent2 = tf.identity(u_l2_s_2)
+    will_have_ship_latent2 = tf.identity(u_l2_s_2)
+
     player_generate_logits = []
     player_move_logits = []
     player_will_have_ship_logits = []
@@ -141,16 +155,16 @@ def build_model(inference=False, num_players=1, learning_rate=None, fine_tune=Fa
         generate_logits = tf.layers.dense(gen_latent, 1, activation=None, name='c40_{}'.format(i))
         generate_logits = tf.squeeze(generate_logits, [1, 2])
 
-        moves_latent = tf.layers.conv2d(moves_latent2, 128, 1, activation=tf.nn.relu, padding='same', name='c41c_{}'.format(i)) # Try 1 kernel
-        moves_latent = tf.layers.conv2d(moves_latent, 128, 1, activation=tf.nn.relu, padding='same', name='c41d_{}'.format(i)) # Try 1 kernel
+        moves_latent = tf.layers.conv2d(moves_latent2, 64, 1, activation=tf.nn.relu, padding='same', name='c41c_{}'.format(i)) # Try 1 kernel
+        #moves_latent = tf.layers.conv2d(moves_latent, 128, 1, activation=tf.nn.relu, padding='same', name='c41d_{}'.format(i)) # Try 1 kernel
         moves_logits = tf.layers.conv2d(moves_latent, 6, 1, activation=None, padding='same', name='c42_{}'.format(i)) # Try 1 kernel
         
         should_construct_latent = tf.layers.dense(latent, 64, activation=tf.nn.relu, name='c43_{}'.format(i))
         should_construct_logits = tf.layers.dense(should_construct_latent, 1, activation=None, name='c44_{}'.format(i))
         should_construct_logits = tf.squeeze(should_construct_logits, [1, 2])
         
-        will_have_ship_latent = tf.layers.conv2d(will_have_ship_latent2, 128, 1, activation=tf.nn.relu, padding='same', name='c45c_{}'.format(i)) # Try 1 kernel
-        will_have_ship_latent = tf.layers.conv2d(will_have_ship_latent, 128, 1, activation=tf.nn.relu, padding='same', name='c45d_{}'.format(i)) # Try 1 kernel
+        will_have_ship_latent = tf.layers.conv2d(will_have_ship_latent2, 64, 1, activation=tf.nn.relu, padding='same', name='c45c_{}'.format(i)) # Try 1 kernel
+       # will_have_ship_latent = tf.layers.conv2d(will_have_ship_latent, 128, 1, activation=tf.nn.relu, padding='same', name='c45d_{}'.format(i)) # Try 1 kernel
         will_have_ship_logits = tf.layers.conv2d(will_have_ship_latent, 1, 1, activation=None, padding='same', name='c46_{}'.format(i)) # Try 1 kernel
         
         did_win_latent1 = tf.layers.dense(latent, 128, activation=tf.nn.relu, name='c47_{}'.format(i))
@@ -232,8 +246,6 @@ def build_model(inference=False, num_players=1, learning_rate=None, fine_tune=Fa
 
     have_ship_mask = tf.cast(have_ship_mask, 'float32')
 
-
-
     have_ship_mask = tf.expand_dims(have_ship_mask, -1)
 
     masked_loss = losses * my_ships
@@ -272,7 +284,7 @@ def build_model(inference=False, num_players=1, learning_rate=None, fine_tune=Fa
     should_construct_losses = tf.reduce_mean(should_construct_losses) # TODO: do I need to add to frames before averaging?
     did_win_losses = tf.reduce_mean(did_win_losses) # TODO: do I need to add to frames before averaging?
 
-    loss = tf.reduce_mean(average_frame_loss) + 0.12*generate_losses + 0.25*tf.reduce_mean(have_ship_average_frame_loss) + 0.05*should_construct_losses + 0.001 * did_win_losses
+    loss = tf.reduce_mean(average_frame_loss) + 0.05*generate_losses + 0.25*tf.reduce_mean(have_ship_average_frame_loss) + 0.05*should_construct_losses + 0.001 * did_win_losses
 
 #    loss = tf.reduce_mean(average_frame_loss) + 0.0000000005*generate_losses + 0.0000000005*tf.reduce_mean(have_ship_average_frame_loss) + 0.0000000005*should_construct_losses + 0.0000000000001 * did_win_losses
 

@@ -410,7 +410,7 @@ try:
             #print(np.sum(s_batch))
             
             T = 400000
-            M = 2 #T/20000
+            M = 20#2 #T/20000
             t = step
             lr = (0.001/2.)*(np.cos(np.pi*np.mod(t - 1, T/M)/(T/M)) + 1)
 
