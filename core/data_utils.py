@@ -316,7 +316,7 @@ class Game(object):
         will_have_ship[:, :, :, 4] = np.roll(moves == 4, -1, 2)
         
         will_have_ship = np.sum(will_have_ship, -1)
-        print(np.max(will_have_ship))
+        #print(np.max(will_have_ship))
         will_have_ship = (will_have_ship > 0.5).astype('uint8')
 
         #frames, my_ships, moves = self.pad_replay(frames, moves)
