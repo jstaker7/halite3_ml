@@ -297,14 +297,27 @@ class Game(object):
 
         frames, moves = self.center_frames(frames, moves) # TODO: Double check that moves are adjusted properly
         
-        will_have_ship = frames[:, :, :, 1:2] > 0.5 # TODO: resolve generate first, below
-        will_have_ship = will_have_ship[1:] # TODO: also resolve these moves in order of confidence
-        has_shipyard_or_dropoff = (frames[:1, :, :, 3:4] > 0.5).astype('float32') + (has_dropoff[-1:] > 0.5).astype('float32')
-        has_shipyard_or_dropoff = has_shipyard_or_dropoff > 0.5
-        will_have_ship = np.concatenate([will_have_ship, has_shipyard_or_dropoff], 0)
-        will_have_ship = will_have_ship.astype('uint8')#.astype('float32')
-        #will_have_ship = np.expand_dims(will_have_ship, -1)
-        will_have_ship = np.squeeze(will_have_ship, -1)
+        if False: # old
+            will_have_ship = frames[:, :, :, 1:2] > 0.5 # TODO: resolve generate first, below
+            will_have_ship = will_have_ship[1:] # TODO: also resolve these moves in order of confidence
+            has_shipyard_or_dropoff = (frames[:1, :, :, 3:4] > 0.5).astype('float32') + (has_dropoff[-1:] > 0.5).astype('float32')
+            has_shipyard_or_dropoff = has_shipyard_or_dropoff > 0.5
+            will_have_ship = np.concatenate([will_have_ship, has_shipyard_or_dropoff], 0)
+            will_have_ship = will_have_ship.astype('uint8')#.astype('float32')
+            #will_have_ship = np.expand_dims(will_have_ship, -1)
+            will_have_ship = np.squeeze(will_have_ship, -1)
+            
+        will_have_ship = np.zeros(frames[:, :, :, :5].shape, dtype=np.uint8)
+        #converted_moves = np.where(np.logical_and(moves >= 0, moves <= 4))
+        will_have_ship[:, :, :, 0] = moves == 0
+        will_have_ship[:, :, :, 1] = np.roll(moves == 1, -1, 1)
+        will_have_ship[:, :, :, 2] = np.roll(moves == 2,  1, 2)
+        will_have_ship[:, :, :, 3] = np.roll(moves == 3,  1, 1)
+        will_have_ship[:, :, :, 4] = np.roll(moves == 4, -1, 2)
+        
+        will_have_ship = np.sum(will_have_ship, -1)
+        print(np.max(will_have_ship))
+        will_have_ship = (will_have_ship > 0.5).astype('uint8')
 
         #frames, my_ships, moves = self.pad_replay(frames, moves)
         

@@ -64,18 +64,19 @@ with gzip.open(os.path.join(replay_root, 'INDEX.pkl'), 'rb') as infile:
 
 PLAYERS = [
             {'pname': 'TheDuck314',
-             #'versions': [30, 31, 33, 34, 35, 36, 39, 40, 41, 42, 43, 44, 47, 48, 50, 52],
-             'versions': [52],
+             #'versions': [30, 31, 33, 34, 35, 36, 39, 40, 41, 42, 43, 44, 47, 48, 50, 52, 53],
+             #'versions': [52],
+             'versions': [41, 42, 43, 44, 47, 48, 50, 52], #12/1 can be deleted
              },
            
             {'pname': 'teccles',
-#             'versions': list(range(96, 104)) + [105, 107, 108, 128, 130] + list(range(111, 117)) + list(range(118, 127)),
-             'versions': [131],
+             'versions': list(range(96, 104)) + [105, 107, 108, 128, 130, 131] + list(range(111, 117)) + list(range(118, 127)),
+             #'versions': [131],
              },
            
             {'pname': 'cowzow',
-             #'versions': [8, 9],
-             'versions': [9],
+             'versions': [8, 9, 10],
+             #'versions': [9],
              },
 
 #            {'pname': 'reCurs3',
@@ -95,7 +96,7 @@ PLAYERS = [
 in_train = set()
 in_valid = set()
 
-def filter_replays(pname, versions, DUCK):
+def filter_replays(pname, versions):
     global in_train
     global in_valid
     keep = []
@@ -107,37 +108,28 @@ def filter_replays(pname, versions, DUCK):
                 keep.append(rp)
                 break
 
-    if DUCK:
-        np.random.shuffle(keep) # in place
+    train, valid = [], []
+    new_keep = []
+    for rp in keep:
+        if rp in in_train:
+            train.append(rp)
+        elif rp in in_valid:
+            valid.append(rp)
+        else:
+            new_keep.append(rp)
 
-        keep, valid = keep[:len(keep)//2], keep[len(keep)//2:]
-        in_train |= set(keep)
-        in_valid |= set(valid)
-        return keep, valid
+    _train, _valid = new_keep[:len(new_keep)//2], new_keep[len(new_keep)//2:]
 
-    else:
-        train, valid = [], []
-        new_keep = []
-        for rp in keep:
-            if rp in in_train:
-                train.append(rp)
-            elif rp in in_valid:
-                valid.append(rp)
-            else:
-                new_keep.append(rp)
+    train += _train
+    valid += _valid
 
-        _train, _valid = new_keep[:len(new_keep)//2], new_keep[len(new_keep)//2:]
+    in_train |= set(train)
+    in_valid |= set(valid)
 
-        train += _train
-        valid += _valid
-
-        in_train |= set(train)
-        in_valid |= set(valid)
-
-        return train, valid
+    return train, valid
 
 for player in PLAYERS:
-    train, valid = filter_replays(player['pname'], player['versions'], player['pname'] == 'TheDuck314')
+    train, valid = filter_replays(player['pname'], player['versions'])
     player['train'] = train
     player['valid'] = valid
     print("{} num train: {} num valid: {}".format(player['pname'], len(train), len(valid)))
@@ -418,7 +410,7 @@ try:
             #print(np.sum(s_batch))
             
             T = 400000
-            M = 4 #T/20000
+            M = 2 #T/20000
             t = step
             lr = (0.001/2.)*(np.cos(np.pi*np.mod(t - 1, T/M)/(T/M)) + 1)
 

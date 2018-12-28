@@ -117,11 +117,23 @@ def build_model(inference=False, num_players=1, learning_rate=None, fine_tune=Fa
     u_l2_s_2 = tf.layers.conv2d(u_l2_s_1, 128, 3, activation=tf.nn.relu, padding='same', name='c34')
     u_l2_s_2 = tf.layers.batch_normalization(u_l2_s_2, training=is_training, name='bn25')
     
+    i = 999
+    moves_latent1 = tf.layers.conv2d(u_l2_s_2, 128, 3, activation=tf.nn.relu, padding='same', name='c41_{}'.format(i)) # Try 1 kernel
+    moves_latent1 = tf.layers.batch_normalization(moves_latent1, training=is_training, name='bn26')
+    moves_latent2 = tf.layers.conv2d(moves_latent1, 128, 3, activation=tf.nn.relu, padding='same', name='c41b_{}'.format(i)) # Try 1 kernel
+    moves_latent2 = tf.layers.batch_normalization(moves_latent2, training=is_training, name='bn27')
+    
+    will_have_ship_latent1 = tf.layers.conv2d(u_l2_s_2, 128, 3, activation=tf.nn.relu, padding='same', name='c45_{}'.format(i)) # Try 1 kernel
+    will_have_ship_latent1 = tf.layers.batch_normalization(will_have_ship_latent1, training=is_training, name='bn28')
+    will_have_ship_latent2 = tf.layers.conv2d(will_have_ship_latent1, 128, 3, activation=tf.nn.relu, padding='same', name='c45b_{}'.format(i)) # Try 1 kernel
+    will_have_ship_latent2 = tf.layers.batch_normalization(will_have_ship_latent2, training=is_training, name='bn29')
+    
     player_generate_logits = []
     player_move_logits = []
     player_will_have_ship_logits = []
     player_should_construct_logits = []
     player_did_win_logits = []
+    
     for i in range(num_players):
 
         gen_latent1 = tf.layers.dense(latent, 128, activation=tf.nn.relu, name='c39_{}'.format(i))
@@ -129,15 +141,17 @@ def build_model(inference=False, num_players=1, learning_rate=None, fine_tune=Fa
         generate_logits = tf.layers.dense(gen_latent, 1, activation=None, name='c40_{}'.format(i))
         generate_logits = tf.squeeze(generate_logits, [1, 2])
 
-        moves_latent = tf.layers.conv2d(u_l2_s_2, 64, 3, activation=tf.nn.relu, padding='same', name='c41_{}'.format(i)) # Try 1 kernel
-        moves_logits = tf.layers.conv2d(moves_latent, 6, 3, activation=None, padding='same', name='c42_{}'.format(i)) # Try 1 kernel
+        moves_latent = tf.layers.conv2d(moves_latent2, 128, 1, activation=tf.nn.relu, padding='same', name='c41c_{}'.format(i)) # Try 1 kernel
+        moves_latent = tf.layers.conv2d(moves_latent, 128, 1, activation=tf.nn.relu, padding='same', name='c41d_{}'.format(i)) # Try 1 kernel
+        moves_logits = tf.layers.conv2d(moves_latent, 6, 1, activation=None, padding='same', name='c42_{}'.format(i)) # Try 1 kernel
         
         should_construct_latent = tf.layers.dense(latent, 64, activation=tf.nn.relu, name='c43_{}'.format(i))
         should_construct_logits = tf.layers.dense(should_construct_latent, 1, activation=None, name='c44_{}'.format(i))
         should_construct_logits = tf.squeeze(should_construct_logits, [1, 2])
         
-        will_have_ship_latent = tf.layers.conv2d(u_l2_s_2, 64, 3, activation=tf.nn.relu, padding='same', name='c45_{}'.format(i)) # Try 1 kernel
-        will_have_ship_logits = tf.layers.conv2d(will_have_ship_latent, 1, 3, activation=None, padding='same', name='c46_{}'.format(i)) # Try 1 kernel
+        will_have_ship_latent = tf.layers.conv2d(will_have_ship_latent2, 128, 1, activation=tf.nn.relu, padding='same', name='c45c_{}'.format(i)) # Try 1 kernel
+        will_have_ship_latent = tf.layers.conv2d(will_have_ship_latent, 128, 1, activation=tf.nn.relu, padding='same', name='c45d_{}'.format(i)) # Try 1 kernel
+        will_have_ship_logits = tf.layers.conv2d(will_have_ship_latent, 1, 1, activation=None, padding='same', name='c46_{}'.format(i)) # Try 1 kernel
         
         did_win_latent1 = tf.layers.dense(latent, 128, activation=tf.nn.relu, name='c47_{}'.format(i))
         did_win_latent = tf.layers.dense(did_win_latent1, 128, activation=tf.nn.relu, name='c47b_{}'.format(i))
@@ -258,8 +272,9 @@ def build_model(inference=False, num_players=1, learning_rate=None, fine_tune=Fa
     should_construct_losses = tf.reduce_mean(should_construct_losses) # TODO: do I need to add to frames before averaging?
     did_win_losses = tf.reduce_mean(did_win_losses) # TODO: do I need to add to frames before averaging?
 
-#    loss = tf.reduce_mean(average_frame_loss) + 0.05*generate_losses + 0.5*tf.reduce_mean(have_ship_average_frame_loss) + 0.05*should_construct_losses + 0.01 * did_win_losses
-    loss = tf.reduce_mean(average_frame_loss) + 0.0000000005*generate_losses + 0.0000000005*tf.reduce_mean(have_ship_average_frame_loss) + 0.0000000005*should_construct_losses + 0.0000000000001 * did_win_losses
+    loss = tf.reduce_mean(average_frame_loss) + 0.12*generate_losses + 0.25*tf.reduce_mean(have_ship_average_frame_loss) + 0.05*should_construct_losses + 0.001 * did_win_losses
+
+#    loss = tf.reduce_mean(average_frame_loss) + 0.0000000005*generate_losses + 0.0000000005*tf.reduce_mean(have_ship_average_frame_loss) + 0.0000000005*should_construct_losses + 0.0000000000001 * did_win_losses
 
     if False:#fine_tune:
         update_ops = tf.get_collection(tf.GraphKeys.UPDATE_OPS)
@@ -267,12 +282,12 @@ def build_model(inference=False, num_players=1, learning_rate=None, fine_tune=Fa
             optimizer = tf.train.MomentumOptimizer(learning_rate, 0.9, use_nesterov=False).minimize(loss)
 
     else:
-        vars = [tf.nn.l2_loss(v) for v in tf.trainable_variables()
+        #vars = [tf.nn.l2_loss(v) for v in tf.trainable_variables()
                         if 'bias' not in v.name and 'c' == v.name[0]]
 
-        L2_loss = tf.add_n(vars) * 0.0000001
+        #L2_loss = tf.add_n(vars) * 0.0000001
 
-        loss += L2_loss
+        #loss += L2_loss
     
         update_ops = tf.get_collection(tf.GraphKeys.UPDATE_OPS)
         with tf.control_dependencies(update_ops):
