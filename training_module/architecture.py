@@ -123,9 +123,9 @@ def build_model(inference=False, num_players=1, learning_rate=None, fine_tune=Fa
 
     u_l2_a = tf.layers.conv2d_transpose(u_l3_s, 64, 3, 2, activation=tf.nn.relu, padding='same', name='c32') # 128
     u_l2_c = tf.concat([u_l2_a, d_l2_a_1], -1)
-    u_l2_s_1 = tf.layers.conv2d(u_l2_c, 128, 3, activation=tf.nn.relu, padding='same', name='c33')
+    u_l2_s_1 = tf.layers.conv2d(u_l2_c, 64, 3, activation=tf.nn.relu, padding='same', name='c33')
     u_l2_s_1 = tf.layers.batch_normalization(u_l2_s_1, training=is_training, name='bn24')
-    u_l2_s_2 = tf.layers.conv2d(u_l2_s_1, 128, 3, activation=tf.nn.relu, padding='same', name='c34')
+    u_l2_s_2 = tf.layers.conv2d(u_l2_s_1, 64, 3, activation=tf.nn.relu, padding='same', name='c34')
     u_l2_s_2 = tf.layers.batch_normalization(u_l2_s_2, training=is_training, name='bn25')
     
 #    i = 999
@@ -183,8 +183,10 @@ def build_model(inference=False, num_players=1, learning_rate=None, fine_tune=Fa
     tf.add_to_collection('g_logits', tf.stack(player_generate_logits))
     tf.add_to_collection('latent', latent)
     tf.add_to_collection('m_probs', tf.nn.softmax(tf.stack(player_move_logits)))
+    tf.add_to_collection('m_probs_raw', tf.stack(player_move_logits))
     
-    tf.add_to_collection('h_logits', tf.stack(player_will_have_ship_logits))
+    tf.add_to_collection('h_logits', tf.nn.sigmoid(tf.stack(player_will_have_ship_logits)))
+    tf.add_to_collection('h_logits_raw', tf.stack(player_will_have_ship_logits))
     tf.add_to_collection('b_logits', tf.stack(player_should_construct_logits))
     tf.add_to_collection('w_logits', tf.stack(player_did_win_logits))
     
@@ -278,13 +280,13 @@ def build_model(inference=False, num_players=1, learning_rate=None, fine_tune=Fa
     player_did_win_losses = [tf.reduce_mean(x) for x in tf.split(did_win_losses, num_players)]
     player_average_frame_losses = [tf.reduce_mean(x) for x in tf.split(average_frame_loss, num_players)]
     player_have_ship_average_frame_losses = [tf.reduce_mean(x) for x in tf.split(have_ship_average_frame_loss, num_players)]
-    player_total_losses = [x+0.05*y+0.5*z+0.05*w+0.01*k for x,y,z,w,k in zip(player_average_frame_losses, player_gen_losses, player_have_ship_average_frame_losses, player_should_construct_losses, player_did_win_losses)]
+    player_total_losses = [x+0.05*y+0.25*z+0.05*w+0.001*k for x,y,z,w,k in zip(player_average_frame_losses, player_gen_losses, player_have_ship_average_frame_losses, player_should_construct_losses, player_did_win_losses)]
     
     generate_losses = tf.reduce_mean(generate_losses) # TODO: do I need to add to frames before averaging?
     should_construct_losses = tf.reduce_mean(should_construct_losses) # TODO: do I need to add to frames before averaging?
     did_win_losses = tf.reduce_mean(did_win_losses) # TODO: do I need to add to frames before averaging?
 
-    loss = tf.reduce_mean(average_frame_loss) + 0.05*generate_losses + 0.25*tf.reduce_mean(have_ship_average_frame_loss) + 0.05*should_construct_losses + 0.001 * did_win_losses
+    loss = tf.reduce_mean(average_frame_loss) + 0.005*generate_losses + 0.005*tf.reduce_mean(have_ship_average_frame_loss) + 0.001*should_construct_losses + 0.00001 * did_win_losses
 
 #    loss = tf.reduce_mean(average_frame_loss) + 0.0000000005*generate_losses + 0.0000000005*tf.reduce_mean(have_ship_average_frame_loss) + 0.0000000005*should_construct_losses + 0.0000000000001 * did_win_losses
 

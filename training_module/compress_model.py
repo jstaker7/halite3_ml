@@ -8,7 +8,7 @@ build_model(True, 3)
 
 #root = '/Users/Peace/Projects/halite3_ml/bots/duck_larger/'
 #root = '/Users/Peace/Documents/models'
-root = '/Users/Peace/Projects/m2'
+root = '/Users/Peace/Projects/n2'
 
 with tf.Session() as sess:
     saver = tf.train.Saver()

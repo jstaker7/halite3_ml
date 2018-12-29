@@ -66,7 +66,7 @@ PLAYERS = [
             {'pname': 'TheDuck314',
              #'versions': [30, 31, 33, 34, 35, 36, 39, 40, 41, 42, 43, 44, 47, 48, 50, 52, 53],
              #'versions': [52],
-             'versions': [41, 42, 43, 44, 47, 48, 50, 52], #12/1 can be deleted
+             'versions': [41, 42, 43, 44, 47, 48, 50, 52, 53],
              },
            
             {'pname': 'teccles',
@@ -118,7 +118,7 @@ def filter_replays(pname, versions):
         else:
             new_keep.append(rp)
 
-    _train, _valid = new_keep[:len(new_keep)//2], new_keep[len(new_keep)//2:]
+    _train, _valid = new_keep[:len(new_keep)//1.33], new_keep[len(new_keep)//1.33:]
 
     train += _train
     valid += _valid
