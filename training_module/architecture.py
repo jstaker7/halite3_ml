@@ -43,14 +43,15 @@ def build_model(inference=False, num_players=1, learning_rate=None, fine_tune=Fa
     
     MAXPOOL = False
 
-    d_l2_a_1 = tf.layers.conv2d(frames, 32, 3, activation=tf.nn.relu, padding='same', name='c1') # 128
+    d_l2_a_1 = tf.layers.conv2d(frames, 64, 1, activation=tf.nn.relu, padding='same', name='c1') # 128
+    _d_l2_a_1 = tf.layers.conv2d(d_l2_a_1, 32, 3, activation=tf.nn.relu, padding='same', name='c1')
     if MAXPOOL:
         d_l2_p = tf.nn.max_pool(d_l2_a_1, [1, 2, 2, 1], [1, 2, 2, 1], 'SAME')
         d_l2_p = tf.layers.batch_normalization(d_l2_p, training=is_training, name='bn1')
     else:
-        d_l2_a_1 = tf.layers.batch_normalization(d_l2_a_1, training=is_training, name='bn1')
+        _d_l2_a_1 = tf.layers.batch_normalization(_d_l2_a_1, training=is_training, name='bn1')
 
-        d_l2_p = tf.layers.conv2d(d_l2_a_1, 16, 3, strides=2, activation=tf.nn.relu, padding='same', name='c4') # 64; This might be incorrect -- too agressive downsampling considering the input size
+        d_l2_p = tf.layers.conv2d(_d_l2_a_1, 16, 3, strides=2, activation=tf.nn.relu, padding='same', name='c4') # 64; This might be incorrect -- too agressive downsampling considering the input size
         d_l2_p = tf.layers.batch_normalization(d_l2_p, training=is_training, name='bn4')
 
     d_l3_a = tf.layers.conv2d(d_l2_p, 16, 3, activation=tf.nn.relu, padding='same', name='c5')
@@ -123,10 +124,14 @@ def build_model(inference=False, num_players=1, learning_rate=None, fine_tune=Fa
 
     u_l2_a = tf.layers.conv2d_transpose(u_l3_s, 64, 3, 2, activation=tf.nn.relu, padding='same', name='c32') # 128
     u_l2_c = tf.concat([u_l2_a, d_l2_a_1], -1)
-    u_l2_s_1 = tf.layers.conv2d(u_l2_c, 64, 3, activation=tf.nn.relu, padding='same', name='c33')
+    u_l2_s_1 = tf.layers.conv2d(u_l2_c, 128, 3, activation=tf.nn.relu, padding='same', name='c33')
     u_l2_s_1 = tf.layers.batch_normalization(u_l2_s_1, training=is_training, name='bn24')
-    u_l2_s_2 = tf.layers.conv2d(u_l2_s_1, 64, 3, activation=tf.nn.relu, padding='same', name='c34')
-    u_l2_s_2 = tf.layers.batch_normalization(u_l2_s_2, training=is_training, name='bn25')
+    u_l2_s_2 = tf.layers.conv2d(u_l2_s_1, 128, 3, activation=tf.nn.relu, padding='same', name='c34')
+    u_l2_s_2 = tf.layers.batch_normalization(u_l2_s_2, training=is_training, name='bn26')
+    u_l2_s_2 = tf.layers.conv2d(u_l2_s_2, 128, 3, activation=tf.nn.relu, padding='same', name='c35')
+    u_l2_s_2 = tf.layers.batch_normalization(u_l2_s_2, training=is_training, name='bn27')
+    u_l2_s_2 = tf.layers.conv2d(u_l2_s_2, 128, 3, activation=tf.nn.relu, padding='same', name='c36')
+    u_l2_s_2 = tf.layers.batch_normalization(u_l2_s_2, training=is_training, name='bn28')
     
 #    i = 999
 #    moves_latent1 = tf.layers.conv2d(u_l2_s_2, 128, 3, activation=tf.nn.relu, padding='same', name='c41_{}'.format(i))

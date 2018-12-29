@@ -65,19 +65,19 @@ with gzip.open(os.path.join(replay_root, 'INDEX.pkl'), 'rb') as infile:
 PLAYERS = [
             {'pname': 'TheDuck314',
              #'versions': [30, 31, 33, 34, 35, 36, 39, 40, 41, 42, 43, 44, 47, 48, 50, 52, 53],
-             #'versions': [52],
-             'versions': [41, 42, 43, 44, 47, 48, 50, 52, 53],
+             'versions': [53],
+             #'versions': [41, 42, 43, 44, 47, 48, 50, 52, 53],
              },
            
-            {'pname': 'teccles',
-             'versions': list(range(96, 104)) + [105, 107, 108, 128, 130, 131] + list(range(111, 117)) + list(range(118, 127)),
-             #'versions': [131],
-             },
+#            {'pname': 'teccles',
+#             'versions': list(range(96, 104)) + [105, 107, 108, 128, 130, 131] + list(range(111, 117)) + list(range(118, 127)),
+#             #'versions': [131],
+#             },
            
-            {'pname': 'cowzow',
-             'versions': [8, 9, 10],
-             #'versions': [9],
-             },
+#            {'pname': 'cowzow',
+#             'versions': [8, 9, 10],
+#             #'versions': [9],
+#             },
 
 #            {'pname': 'reCurs3',
 #             'versions': [113, 114, 115, 117, 120, 125, 126, 127, 128],
@@ -118,7 +118,7 @@ def filter_replays(pname, versions):
         else:
             new_keep.append(rp)
 
-    _train, _valid = new_keep[:len(new_keep)//1.33], new_keep[len(new_keep)//1.33:]
+    _train, _valid = new_keep[:int(len(new_keep)/1.33)], new_keep[int(len(new_keep)/1.33):]
 
     train += _train
     valid += _valid
@@ -158,7 +158,7 @@ for player in PLAYERS:
 
 min_buffer_size = 5000
 max_buffer_size = 8000
-batch_size = 16
+batch_size = 32
 
 #min_buffer_size = 500
 #max_buffer_size = 800
@@ -410,9 +410,9 @@ try:
             #print(np.sum(s_batch))
             
             T = 400000
-            M = 20#2 #T/20000
+            M = 10#20#2 #T/20000
             t = step
-            lr = (0.001/2.)*(np.cos(np.pi*np.mod(t - 1, T/M)/(T/M)) + 1)
+            lr = (0.0006/2.)*(np.cos(np.pi*np.mod(t - 1, T/M)/(T/M)) + 1)
 
             feed_dict = {frames_node: f_batch,
                          my_player_features_node: c_batch,
