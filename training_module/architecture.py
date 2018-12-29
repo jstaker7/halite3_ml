@@ -43,7 +43,7 @@ def build_model(inference=False, num_players=1, learning_rate=None, fine_tune=Fa
     
     MAXPOOL = False
 
-    d_l2_a_1 = tf.layers.conv2d(frames, 64, 1, activation=tf.nn.relu, padding='same', name='c1') # 128
+    d_l2_a_1 = tf.layers.conv2d(frames, 64, 1, activation=tf.nn.relu, padding='same', name='c1aa') # 128
     _d_l2_a_1 = tf.layers.conv2d(d_l2_a_1, 32, 3, activation=tf.nn.relu, padding='same', name='c1')
     if MAXPOOL:
         d_l2_p = tf.nn.max_pool(d_l2_a_1, [1, 2, 2, 1], [1, 2, 2, 1], 'SAME')
