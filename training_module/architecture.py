@@ -155,22 +155,22 @@ def build_model(inference=False, num_players=1, learning_rate=None, fine_tune=Fa
     
     for i in range(num_players):
 
-        gen_latent1 = tf.layers.dense(latent, 128, activation=tf.nn.relu, name='c39_{}'.format(i))
-        gen_latent = tf.layers.dense(gen_latent1, 128, activation=tf.nn.relu, name='c39b_{}'.format(i))
+        gen_latent1 = tf.layers.dense(latent, 256, activation=tf.nn.relu, name='c39_{}'.format(i))
+        gen_latent = tf.layers.dense(gen_latent1, 256, activation=tf.nn.relu, name='c39b_{}'.format(i))
         generate_logits = tf.layers.dense(gen_latent, 1, activation=None, name='c40_{}'.format(i))
         generate_logits = tf.squeeze(generate_logits, [1, 2])
 
-        moves_latent = tf.layers.conv2d(moves_latent2, 64, 1, activation=tf.nn.relu, padding='same', name='c41c_{}'.format(i)) # Try 1 kernel
-        #moves_latent = tf.layers.conv2d(moves_latent, 128, 1, activation=tf.nn.relu, padding='same', name='c41d_{}'.format(i)) # Try 1 kernel
-        moves_logits = tf.layers.conv2d(moves_latent, 6, 1, activation=None, padding='same', name='c42_{}'.format(i)) # Try 1 kernel
+        moves_latent = tf.layers.conv2d(moves_latent2, 128, 1, activation=tf.nn.relu, padding='same', name='c41c_{}'.format(i))
+        moves_latent = tf.layers.conv2d(moves_latent, 128, 1, activation=tf.nn.relu, padding='same', name='c41d_{}'.format(i))
+        moves_logits = tf.layers.conv2d(moves_latent, 6, 1, activation=None, padding='same', name='c42_{}'.format(i))
         
         should_construct_latent = tf.layers.dense(latent, 64, activation=tf.nn.relu, name='c43_{}'.format(i))
         should_construct_logits = tf.layers.dense(should_construct_latent, 1, activation=None, name='c44_{}'.format(i))
         should_construct_logits = tf.squeeze(should_construct_logits, [1, 2])
         
-        will_have_ship_latent = tf.layers.conv2d(will_have_ship_latent2, 64, 1, activation=tf.nn.relu, padding='same', name='c45c_{}'.format(i)) # Try 1 kernel
-       # will_have_ship_latent = tf.layers.conv2d(will_have_ship_latent, 128, 1, activation=tf.nn.relu, padding='same', name='c45d_{}'.format(i)) # Try 1 kernel
-        will_have_ship_logits = tf.layers.conv2d(will_have_ship_latent, 1, 1, activation=None, padding='same', name='c46_{}'.format(i)) # Try 1 kernel
+        will_have_ship_latent = tf.layers.conv2d(will_have_ship_latent2, 64, 1, activation=tf.nn.relu, padding='same', name='c45c_{}'.format(i))
+       # will_have_ship_latent = tf.layers.conv2d(will_have_ship_latent, 128, 1, activation=tf.nn.relu, padding='same', name='c45d_{}'.format(i))
+        will_have_ship_logits = tf.layers.conv2d(will_have_ship_latent, 1, 1, activation=None, padding='same', name='c46_{}'.format(i))
         
         did_win_latent1 = tf.layers.dense(latent, 128, activation=tf.nn.relu, name='c47_{}'.format(i))
         did_win_latent = tf.layers.dense(did_win_latent1, 128, activation=tf.nn.relu, name='c47b_{}'.format(i))
