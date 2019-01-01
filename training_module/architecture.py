@@ -100,40 +100,40 @@ def build_model(inference=False, num_players=1, learning_rate=None, fine_tune=Fa
     u_l8_s = tf.layers.conv2d(u_l8_c, 128, 3, activation=tf.nn.relu, padding='same', name='c21')
     u_l8_s = tf.layers.batch_normalization(u_l8_s, training=is_training, name='bn18')
 
-    u_l7_a = tf.layers.conv2d_transpose(u_l8_s, 128, 3, 2, activation=tf.nn.relu, padding='same', name='c22') # 4
+    u_l7_a = tf.layers.conv2d_transpose(u_l8_s, 64, 3, 2, activation=tf.nn.relu, padding='same', name='c22') # 4
     u_l7_c = tf.concat([u_l7_a, d_l7_a], -1)
-    u_l7_s = tf.layers.conv2d(u_l7_c, 128, 3, activation=tf.nn.relu, padding='same', name='c23')
+    u_l7_s = tf.layers.conv2d(u_l7_c, 64, 3, activation=tf.nn.relu, padding='same', name='c23')
     u_l7_s = tf.layers.batch_normalization(u_l7_s, training=is_training, name='bn19')
 
-    u_l6_a = tf.layers.conv2d_transpose(u_l7_s, 64, 3, 2, activation=tf.nn.relu, padding='same', name='c24') # 8
+    u_l6_a = tf.layers.conv2d_transpose(u_l7_s, 32, 3, 2, activation=tf.nn.relu, padding='same', name='c24') # 8
     u_l6_c = tf.concat([u_l6_a, d_l6_a], -1)
-    u_l6_s = tf.layers.conv2d(u_l6_c, 64, 3, activation=tf.nn.relu, padding='same', name='c25')
+    u_l6_s = tf.layers.conv2d(u_l6_c, 32, 3, activation=tf.nn.relu, padding='same', name='c25')
     u_l6_s = tf.layers.batch_normalization(u_l6_s, training=is_training, name='bn20')
 
-    u_l5_a = tf.layers.conv2d_transpose(u_l6_s, 64, 3, 2, activation=tf.nn.relu, padding='same', name='c26') # 16
+    u_l5_a = tf.layers.conv2d_transpose(u_l6_s, 32, 3, 2, activation=tf.nn.relu, padding='same', name='c26') # 16
     u_l5_c = tf.concat([u_l5_a, d_l5_a], -1)
-    u_l5_s = tf.layers.conv2d(u_l5_c, 64, 3, activation=tf.nn.relu, padding='same', name='c27')
+    u_l5_s = tf.layers.conv2d(u_l5_c, 32, 3, activation=tf.nn.relu, padding='same', name='c27')
     u_l5_s = tf.layers.batch_normalization(u_l5_s, training=is_training, name='bn21')
 
-    u_l4_a = tf.layers.conv2d_transpose(u_l5_s, 64, 3, 2, activation=tf.nn.relu, padding='same', name='c28') # 32
+    u_l4_a = tf.layers.conv2d_transpose(u_l5_s, 32, 3, 2, activation=tf.nn.relu, padding='same', name='c28') # 32
     u_l4_c = tf.concat([u_l4_a, d_l4_a], -1)
-    u_l4_s = tf.layers.conv2d(u_l4_c, 64, 3, activation=tf.nn.relu, padding='same', name='c29')
+    u_l4_s = tf.layers.conv2d(u_l4_c, 32, 3, activation=tf.nn.relu, padding='same', name='c29')
     u_l4_s = tf.layers.batch_normalization(u_l4_s, training=is_training, name='bn22')
 
-    u_l3_a = tf.layers.conv2d_transpose(u_l4_s, 64, 3, 2, activation=tf.nn.relu, padding='same', name='30') # 64
+    u_l3_a = tf.layers.conv2d_transpose(u_l4_s, 32, 3, 2, activation=tf.nn.relu, padding='same', name='30') # 64
     u_l3_c = tf.concat([u_l3_a, d_l3_a], -1)
-    u_l3_s = tf.layers.conv2d(u_l3_c, 64, 3, activation=tf.nn.relu, padding='same', name='c31')
+    u_l3_s = tf.layers.conv2d(u_l3_c, 32, 3, activation=tf.nn.relu, padding='same', name='c31')
     u_l3_s = tf.layers.batch_normalization(u_l3_s, training=is_training, name='bn23')
 
-    u_l2_a = tf.layers.conv2d_transpose(u_l3_s, 64, 3, 2, activation=tf.nn.relu, padding='same', name='c32') # 128
+    u_l2_a = tf.layers.conv2d_transpose(u_l3_s, 32, 3, 2, activation=tf.nn.relu, padding='same', name='c32') # 128
     u_l2_c = tf.concat([u_l2_a, d_l2_a_1], -1)
-    u_l2_s_1 = tf.layers.conv2d(u_l2_c, 128, 3, activation=tf.nn.relu, padding='same', name='c33')
+    u_l2_s_1 = tf.layers.conv2d(u_l2_c, 64, 3, activation=tf.nn.relu, padding='same', name='c33')
     u_l2_s_1 = tf.layers.batch_normalization(u_l2_s_1, training=is_training, name='bn24')
-    u_l2_s_2 = tf.layers.conv2d(u_l2_s_1, 128, 3, activation=tf.nn.relu, padding='same', name='c34')
+    u_l2_s_2 = tf.layers.conv2d(u_l2_s_1, 64, 3, activation=tf.nn.relu, padding='same', name='c34')
     u_l2_s_2 = tf.layers.batch_normalization(u_l2_s_2, training=is_training, name='bn26')
-    u_l2_s_2 = tf.layers.conv2d(u_l2_s_2, 128, 3, activation=tf.nn.relu, padding='same', name='c35')
+    u_l2_s_2 = tf.layers.conv2d(u_l2_s_2, 64, 3, activation=tf.nn.relu, padding='same', name='c35')
     u_l2_s_2 = tf.layers.batch_normalization(u_l2_s_2, training=is_training, name='bn27')
-    u_l2_s_2 = tf.layers.conv2d(u_l2_s_2, 128, 3, activation=tf.nn.relu, padding='same', name='c36')
+    u_l2_s_2 = tf.layers.conv2d(u_l2_s_2, 64, 3, activation=tf.nn.relu, padding='same', name='c36')
     u_l2_s_2 = tf.layers.batch_normalization(u_l2_s_2, training=is_training, name='bn28')
 
     moves_latent2 = tf.identity(u_l2_s_2)
