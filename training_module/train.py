@@ -63,11 +63,9 @@ with gzip.open(os.path.join(replay_root, 'INDEX.pkl'), 'rb') as infile:
     master_index = pickle.load(infile)
 
 PLAYERS = [
-#            {'pname': 'TheDuck314',
-#             #'versions': [30, 31, 33, 34, 35, 36, 39, 40, 41, 42, 43, 44, 47, 48, 50, 52, 53],
-#             'versions': [53],
-#             #'versions': [41, 42, 43, 44, 47, 48, 50, 52, 53],
-#             },
+            {'pname': 'TheDuck314',
+             'versions': [53],
+             },
            
 #            {'pname': 'teccles',
 #             'versions': list(range(96, 104)) + [105, 107, 108, 128, 130, 131] + list(range(111, 117)) + list(range(118, 127)),
