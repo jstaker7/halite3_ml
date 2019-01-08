@@ -166,14 +166,14 @@ def build_model(inference=False, num_players=1, learning_rate=None, fine_tune=Fa
     for i in range(num_players):
 
         gen_latent1 = tf.layers.dense(latent, 64, activation=tf.nn.relu, name='c39_{}'.format(i))
-        gen_latent1 = tf.layers.batch_normalization(gen_latent1, training=is_training, name='bn39')
+        gen_latent1 = tf.layers.batch_normalization(gen_latent1, training=is_training, name='bn39_{}'.format(i))
         gen_latent = tf.layers.dense(gen_latent1, 32, activation=tf.nn.relu, name='c39b_{}'.format(i))
-        gen_latent = tf.layers.batch_normalization(gen_latent, training=is_training, name='bn40')
+        gen_latent = tf.layers.batch_normalization(gen_latent, training=is_training, name='bn40_{}'.format(i))
         generate_logits = tf.layers.dense(gen_latent, 1, activation=None, name='c40_{}'.format(i))
         generate_logits = tf.squeeze(generate_logits, [1, 2])
 
         moves_latent = tf.layers.conv2d(moves_latent2, 64, 1, activation=tf.nn.relu, padding='same', name='c41c_{}'.format(i))
-        moves_latent = tf.layers.batch_normalization(moves_latent, training=is_training, name='bn41')
+        moves_latent = tf.layers.batch_normalization(moves_latent, training=is_training, name='bn41_{}'.format(i))
 #        moves_latent = tf.layers.conv2d(moves_latent, 128, 1, activation=tf.nn.relu, padding='same', name='c41d_{}'.format(i))
         moves_logits = tf.layers.conv2d(moves_latent, 6, 1, activation=None, padding='same', name='c42_{}'.format(i))
         
