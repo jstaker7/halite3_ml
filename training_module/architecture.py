@@ -177,7 +177,7 @@ def build_model(inference=False, num_players=1, learning_rate=None, fine_tune=Fa
         refined_1a = tf.layers.conv2d(update, 64, 5, activation=tf.nn.relu, padding='same', name='refined_a_{}'.format(i))
         refined_1l = tf.layers.conv2d(refined_1a, 6, 1, activation=None, padding='same', name='refined_l_{}'.format(i))
 
-        refined_1p = tf.where(tf.equal(tf.reduce_max(refined_1l, axis=-1, keep_dims=True), refined_1l), tf.constant(1, shape=refined_1l.shape), tf.constant(0, shape=refined_1l.shape)) # initial guess
+        refined_1p = tf.where(tf.equal(tf.reduce_max(refined_1l, axis=-1, keepdims=True), refined_1l), tf.constant(1, shape=tf.shape(refined_1l)), tf.constant(0, shape=tf.shape(refined_1l))) # initial guess
 
         state = tf.layers.conv2d(refined_1p, 128, 1, activation=None, padding='same', name='state_{}'.format(i), reuse=True)
         state = tf.concat([u_l2_s_2, state], -1)
@@ -186,7 +186,7 @@ def build_model(inference=False, num_players=1, learning_rate=None, fine_tune=Fa
         refined_1a = tf.layers.conv2d(update, 64, 5, activation=tf.nn.relu, padding='same', name='refined_a_{}'.format(i), reuse=True)
         refined_1l = tf.layers.conv2d(refined_1a, 6, 1, activation=None, padding='same', name='refined_l_{}'.format(i), reuse=True)
 
-        refined_1p = tf.where(tf.equal(tf.reduce_max(refined_1l, axis=-1, keep_dims=True), refined_1l), tf.constant(1, shape=refined_1l.shape), tf.constant(0, shape=refined_1l.shape))
+        refined_1p = tf.where(tf.equal(tf.reduce_max(refined_1l, axis=-1, keepdims=True), refined_1l), tf.constant(1, shape=tf.shape(refined_1l)), tf.constant(0, shape=tf.shape(refined_1l)))
 
         state = tf.layers.conv2d(refined_1p, 128, 1, activation=None, padding='same', name='state_{}'.format(i), reuse=True)
         state = tf.concat([u_l2_s_2, state], -1)
