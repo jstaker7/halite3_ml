@@ -156,7 +156,7 @@ for player in PLAYERS:
 
 min_buffer_size = 5000
 max_buffer_size = 8000
-batch_size = 32
+batch_size = 16
 
 #min_buffer_size = 500
 #max_buffer_size = 800
