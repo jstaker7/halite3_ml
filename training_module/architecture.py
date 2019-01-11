@@ -158,11 +158,8 @@ def build_model(inference=False, num_players=1, learning_rate=None, fine_tune=Fa
     init_shape = tf.stack([_shape[0], _shape[1], _shape[2], 6])
     zero_state = tf.zeros(init_shape, tf.float32)
 
-    print(init_shape)
-    print(_shape)
-
-    one_sel = tf.constant(1, shape=init_shape)
-    zro_sel = tf.constant(0, shape=init_shape)
+    one_sel = tf.to_float(tf.fill(init_shape, 1))
+    zro_sel = tf.to_float(tf.fill(init_shape, 0))
 
     #moves_latent2 = tf.identity(u_l2_s_2)
     will_have_ship_latent2 = tf.identity(u_l2_s_2)
