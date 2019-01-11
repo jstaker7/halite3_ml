@@ -158,6 +158,9 @@ def build_model(inference=False, num_players=1, learning_rate=None, fine_tune=Fa
     init_shape = tf.stack([_shape[0], _shape[1], _shape[2], 6])
     zero_state = tf.zeros(init_shape, tf.float32)
 
+    #one_sel = tf.constant(1, shape=tf.shape(refined_1l))
+    #zro_sel = tf.constant(0, shape=tf.shape(refined_1l))
+
     #moves_latent2 = tf.identity(u_l2_s_2)
     will_have_ship_latent2 = tf.identity(u_l2_s_2)
 
@@ -177,7 +180,7 @@ def build_model(inference=False, num_players=1, learning_rate=None, fine_tune=Fa
         refined_1a = tf.layers.conv2d(update, 64, 5, activation=tf.nn.relu, padding='same', name='refined_a_{}'.format(i))
         refined_1l = tf.layers.conv2d(refined_1a, 6, 1, activation=None, padding='same', name='refined_l_{}'.format(i))
 
-        refined_1p = tf.where(tf.equal(tf.reduce_max(refined_1l, axis=-1, keepdims=True), refined_1l), tf.constant(1, shape=tf.shape(refined_1l)), tf.constant(0, shape=tf.shape(refined_1l))) # initial guess
+        refined_1p = tf.where(tf.equal(tf.reduce_max(refined_1l, axis=-1, keepdims=True), refined_1l), tf.constant(1, shape=init_shape), tf.constant(0, shape=init_shape)) # initial guess
 
         state = tf.layers.conv2d(refined_1p, 128, 1, activation=None, padding='same', name='state_{}'.format(i), reuse=True)
         state = tf.concat([u_l2_s_2, state], -1)
@@ -186,7 +189,7 @@ def build_model(inference=False, num_players=1, learning_rate=None, fine_tune=Fa
         refined_1a = tf.layers.conv2d(update, 64, 5, activation=tf.nn.relu, padding='same', name='refined_a_{}'.format(i), reuse=True)
         refined_1l = tf.layers.conv2d(refined_1a, 6, 1, activation=None, padding='same', name='refined_l_{}'.format(i), reuse=True)
 
-        refined_1p = tf.where(tf.equal(tf.reduce_max(refined_1l, axis=-1, keepdims=True), refined_1l), tf.constant(1, shape=tf.shape(refined_1l)), tf.constant(0, shape=tf.shape(refined_1l)))
+        refined_1p = tf.where(tf.equal(tf.reduce_max(refined_1l, axis=-1, keepdims=True), refined_1l), tf.constant(1, shape=init_shape), tf.constant(0, shape=init_shape))
 
         state = tf.layers.conv2d(refined_1p, 128, 1, activation=None, padding='same', name='state_{}'.format(i), reuse=True)
         state = tf.concat([u_l2_s_2, state], -1)
