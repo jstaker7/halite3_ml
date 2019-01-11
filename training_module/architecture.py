@@ -154,7 +154,11 @@ def build_model(inference=False, num_players=1, learning_rate=None, fine_tune=Fa
     u_l2_s_2 = tf.layers.conv2d(u_l2_s_2, 128, 3, activation=tf.nn.relu, padding='same', name='c36')
     u_l2_s_2 = tf.layers.batch_normalization(u_l2_s_2, training=is_training, name='bn28')
 
-    moves_latent2 = tf.identity(u_l2_s_2)
+    _shape = tf.shape(u_l2_s_2)
+    init_shape = tf.stack([_shape[0], _shape[1], _shape[2], 6])
+    zero_state = tf.zeros(init_shape, tf.float32)
+
+    #moves_latent2 = tf.identity(u_l2_s_2)
     will_have_ship_latent2 = tf.identity(u_l2_s_2)
 
     player_generate_logits = []
@@ -164,6 +168,32 @@ def build_model(inference=False, num_players=1, learning_rate=None, fine_tune=Fa
     player_did_win_logits = []
     
     for i in range(num_players):
+    
+        state = tf.layers.conv2d(zero_state, 128, 1, activation=None, padding='same', name='state_{}'.format(i))
+
+        initial = tf.concat([u_l2_s_2, state], -1)
+        update = tf.layers.conv2d(initial, 256, 3, activation=tf.nn.relu, padding='same', name='update_{}'.format(i))
+
+        refined_1a = tf.layers.conv2d(update, 64, 5, activation=tf.nn.relu, padding='same', name='refined_a_{}'.format(i))
+        refined_1l = tf.layers.conv2d(refined_1a, 6, 1, activation=None, padding='same', name='refined_l_{}'.format(i))
+
+        refined_1p = tf.where(tf.equal(tf.reduce_max(refined_1l, axis=-1, keep_dims=True), refined_1l), tf.constant(1, shape=refined_1l.shape), tf.constant(0, shape=refined_1l.shape)) # initial guess
+
+        state = tf.layers.conv2d(refined_1p, 128, 1, activation=None, padding='same', name='state_{}'.format(i), reuse=True)
+        state = tf.concat([u_l2_s_2, state], -1)
+        update = tf.layers.conv2d(state, 256, 3, activation=tf.nn.relu, padding='same', name='update_{}'.format(i), reuse=True)
+
+        refined_1a = tf.layers.conv2d(update, 64, 5, activation=tf.nn.relu, padding='same', name='refined_a_{}'.format(i), reuse=True)
+        refined_1l = tf.layers.conv2d(refined_1a, 6, 1, activation=None, padding='same', name='refined_l_{}'.format(i), reuse=True)
+
+        refined_1p = tf.where(tf.equal(tf.reduce_max(refined_1l, axis=-1, keep_dims=True), refined_1l), tf.constant(1, shape=refined_1l.shape), tf.constant(0, shape=refined_1l.shape))
+
+        state = tf.layers.conv2d(refined_1p, 128, 1, activation=None, padding='same', name='state_{}'.format(i), reuse=True)
+        state = tf.concat([u_l2_s_2, state], -1)
+        update = tf.layers.conv2d(state, 256, 3, activation=tf.nn.relu, padding='same', name='update_{}'.format(i), reuse=True)
+
+        refined_1a = tf.layers.conv2d(update, 64, 5, activation=tf.nn.relu, padding='same', name='refined_a_{}'.format(i), reuse=True)
+        moves_logits = tf.layers.conv2d(refined_1a, 6, 1, activation=None, padding='same', name='refined_l_{}'.format(i), reuse=True)
 
         gen_latent1 = tf.layers.dense(latent, 64, activation=tf.nn.relu, name='c39_{}'.format(i))
         gen_latent1 = tf.layers.batch_normalization(gen_latent1, training=is_training, name='bn39_{}'.format(i))
@@ -172,11 +202,11 @@ def build_model(inference=False, num_players=1, learning_rate=None, fine_tune=Fa
         generate_logits = tf.layers.dense(gen_latent, 1, activation=None, name='c40_{}'.format(i))
         generate_logits = tf.squeeze(generate_logits, [1, 2])
 
-        moves_latent = tf.layers.conv2d(moves_latent2, 64, 1, activation=tf.nn.relu, padding='same', name='c41c_{}'.format(i))
-        moves_latent = tf.layers.batch_normalization(moves_latent, training=is_training, name='bn41_{}'.format(i))
-#        moves_latent = tf.layers.conv2d(moves_latent, 128, 1, activation=tf.nn.relu, padding='same', name='c41d_{}'.format(i))
-        moves_logits = tf.layers.conv2d(moves_latent, 6, 1, activation=None, padding='same', name='c42_{}'.format(i))
-        
+#        moves_latent = tf.layers.conv2d(moves_latent2, 64, 1, activation=tf.nn.relu, padding='same', name='c41c_{}'.format(i))
+#        moves_latent = tf.layers.batch_normalization(moves_latent, training=is_training, name='bn41_{}'.format(i))
+##        moves_latent = tf.layers.conv2d(moves_latent, 128, 1, activation=tf.nn.relu, padding='same', name='c41d_{}'.format(i))
+#        moves_logits = tf.layers.conv2d(moves_latent, 6, 1, activation=None, padding='same', name='c42_{}'.format(i))
+
         if not inference:
             should_construct_latent = tf.layers.dense(latent, 64, activation=tf.nn.relu, name='c43_{}'.format(i))
             should_construct_logits = tf.layers.dense(should_construct_latent, 1, activation=None, name='c44_{}'.format(i))
