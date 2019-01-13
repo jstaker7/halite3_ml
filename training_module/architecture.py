@@ -52,11 +52,7 @@ def build_model(inference=False, num_players=1, learning_rate=None, fine_tune=Fa
     d_l2_a_1_pre = tf.layers.conv2d(frames, 128, 1, activation=None, padding='same', name='c1aa') # 128
     d_l2_a_1 = tf.nn.relu(d_l2_a_1_pre)
     d_l2_a_1 = tf.layers.batch_normalization(d_l2_a_1, training=is_training, name='bn100')
-    _d_l2_a_1 = tf.layers.conv2d(d_l2_a_1, 128, 3, activation=tf.nn.relu, padding='same', name='c1a')
-    _d_l2_a_1 = tf.layers.batch_normalization(_d_l2_a_1, training=is_training, name='bna1')
-    _d_l2_a_1 = tf.layers.conv2d(_d_l2_a_1, 128, 3, activation=tf.nn.relu, padding='same', name='c1b')
-    _d_l2_a_1 = tf.layers.batch_normalization(_d_l2_a_1, training=is_training, name='bnb1')
-    _d_l2_a_1 = tf.layers.conv2d(_d_l2_a_1, 128, 3, activation=tf.nn.relu, padding='same', name='c1c')
+    _d_l2_a_1 = tf.layers.conv2d(d_l2_a_1, 128, 3, activation=tf.nn.relu, padding='same', name='c1')
     if MAXPOOL:
         d_l2_p = tf.nn.max_pool(d_l2_a_1, [1, 2, 2, 1], [1, 2, 2, 1], 'SAME')
         d_l2_p = tf.layers.batch_normalization(d_l2_p, training=is_training, name='bn1')
@@ -68,11 +64,6 @@ def build_model(inference=False, num_players=1, learning_rate=None, fine_tune=Fa
 
     d_l3_a_pre = tf.layers.conv2d(d_l2_p, 128, 3, activation=None, padding='same', name='c5')
     d_l3_a = tf.nn.relu(d_l3_a_pre)
-
-    d_l3_a = tf.layers.batch_normalization(d_l3_a, training=is_training, name='bnb12')
-    d_l3_a = tf.layers.conv2d(d_l3_a, 128, 3, activation=tf.nn.relu, padding='same', name='c5a')
-    d_l3_a = tf.layers.batch_normalization(d_l3_a, training=is_training, name='bnb13')
-    d_l3_a = tf.layers.conv2d(d_l3_a, 128, 3, activation=tf.nn.relu, padding='same', name='c5b')
     
     if MAXPOOL:
         d_l3_p = tf.nn.max_pool(d_l3_a, [1, 2, 2, 1], [1, 2, 2, 1], 'SAME')
@@ -84,49 +75,24 @@ def build_model(inference=False, num_players=1, learning_rate=None, fine_tune=Fa
 
     d_l4_a_pre = tf.layers.conv2d(d_l3_p, 128, 3, activation=None, padding='same', name='c7')
     d_l4_a = tf.nn.relu(d_l4_a_pre)
-
-
-    d_l4_a = tf.layers.batch_normalization(d_l4_a, training=is_training, name='bnb42')
-    d_l4_a = tf.layers.conv2d(d_l4_a, 128, 3, activation=tf.nn.relu, padding='same', name='c45a')
-    d_l4_a = tf.layers.batch_normalization(d_l4_a, training=is_training, name='bnb43')
-    d_l4_a = tf.layers.conv2d(d_l4_a, 128, 3, activation=tf.nn.relu, padding='same', name='c45b')
-
     d_l4_a = tf.layers.batch_normalization(d_l4_a, training=is_training, name='bn7')
     d_l4_p = tf.layers.conv2d(d_l4_a, 128, 3, strides=2, activation=tf.nn.relu, padding='same', name='c8') # 16
     d_l4_p = tf.layers.batch_normalization(d_l4_p, training=is_training, name='bn8')
 
     d_l5_a_pre = tf.layers.conv2d(d_l4_p, 128, 3, activation=None, padding='same', name='c9')
     d_l5_a = tf.nn.relu(d_l5_a_pre)
-
-    d_l5_a = tf.layers.batch_normalization(d_l5_a, training=is_training, name='bnb52')
-    d_l5_a = tf.layers.conv2d(d_l5_a, 128, 3, activation=tf.nn.relu, padding='same', name='c55a')
-    d_l5_a = tf.layers.batch_normalization(d_l5_a, training=is_training, name='bnb53')
-    d_l5_a = tf.layers.conv2d(d_l5_a, 128, 3, activation=tf.nn.relu, padding='same', name='c55b')
-
     d_l5_a = tf.layers.batch_normalization(d_l5_a, training=is_training, name='bn9')
     d_l5_p = tf.layers.conv2d(d_l5_a, 128, 3, strides=2, activation=tf.nn.relu, padding='same', name='c10') # 8
     d_l5_p = tf.layers.batch_normalization(d_l5_p, training=is_training, name='bn10')
 
     d_l6_a_pre = tf.layers.conv2d(d_l5_p, 128, 3, activation=None, padding='same', name='c11')
     d_l6_a = tf.nn.relu(d_l6_a_pre)
-
-    d_l6_a = tf.layers.batch_normalization(d_l6_a, training=is_training, name='bnb62')
-    d_l6_a = tf.layers.conv2d(d_l6_a, 128, 3, activation=tf.nn.relu, padding='same', name='c65a')
-    d_l6_a = tf.layers.batch_normalization(d_l6_a, training=is_training, name='bnb63')
-    d_l6_a = tf.layers.conv2d(d_l6_a, 128, 3, activation=tf.nn.relu, padding='same', name='c65b')
-
     d_l6_a = tf.layers.batch_normalization(d_l6_a, training=is_training, name='bn11')
     d_l6_p = tf.layers.conv2d(d_l6_a, 128, 3, strides=2, activation=tf.nn.relu, padding='same', name='c12') # 4
     d_l6_p = tf.layers.batch_normalization(d_l6_p, training=is_training, name='bn12')
 
     d_l7_a_pre = tf.layers.conv2d(d_l6_p, 128, 3, activation=None, padding='same', name='c13')
     d_l7_a = tf.nn.relu(d_l7_a_pre)
-
-    d_l7_a = tf.layers.batch_normalization(d_l7_a, training=is_training, name='bnb72')
-    d_l7_a = tf.layers.conv2d(d_l7_a, 128, 3, activation=tf.nn.relu, padding='same', name='c75a')
-    d_l7_a = tf.layers.batch_normalization(d_l7_a, training=is_training, name='bnb73')
-    d_l7_a = tf.layers.conv2d(d_l7_a, 128, 3, activation=tf.nn.relu, padding='same', name='c75b')
-
     d_l7_a = tf.layers.batch_normalization(d_l7_a, training=is_training, name='bn13')
     d_l7_p = tf.layers.conv2d(d_l7_a, 128, 3, strides=2, activation=tf.nn.relu, padding='same', name='c14') # 2
     d_l7_p = tf.layers.batch_normalization(d_l7_p, training=is_training, name='bn14')
@@ -187,7 +153,6 @@ def build_model(inference=False, num_players=1, learning_rate=None, fine_tune=Fa
     u_l2_s_2 = tf.layers.batch_normalization(u_l2_s_2, training=is_training, name='bn27')
     u_l2_s_2 = tf.layers.conv2d(u_l2_s_2, 128, 3, activation=tf.nn.relu, padding='same', name='c36')
     u_l2_s_2 = tf.layers.batch_normalization(u_l2_s_2, training=is_training, name='bn28')
-    
 
     moves_latent2 = tf.identity(u_l2_s_2)
     will_have_ship_latent2 = tf.identity(u_l2_s_2)

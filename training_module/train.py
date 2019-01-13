@@ -71,11 +71,23 @@ PLAYERS = [
 #             'versions': list(range(96, 104)) + [105, 107, 108, 128, 130, 131] + list(range(111, 117)) + list(range(118, 127)),
 #             #'versions': [131],
 #             },
+
+#            {'pname': 'teccles',
+#             'versions': [135],
+#             },
+#
+#            {'pname': 'teccles',
+#             'versions': [138],
+#             },
+#
+#            {'pname': 'teccles',
+#             'versions': [139],
+#             },
            
-            {'pname': 'cowzow',
-             #'versions': [8, 9, 10],
-             'versions': [10],
-             },
+#            {'pname': 'cowzow',
+#             #'versions': [8, 9, 10],
+#             'versions': [10],
+#             },
 
 #            {'pname': 'reCurs3',
 #             'versions': [113, 114, 115, 117, 120, 125, 126, 127, 128],
@@ -439,7 +451,7 @@ try:
             reg_loss = 0
             losses.append(loss)
             reg_losses.append(reg_loss)
-            if step % 5000 == 0:
+            if step % 2500 == 0:
                 player_gen_losses = []
                 player_average_frame_losses = []
                 player_total_losses = []
@@ -511,7 +523,7 @@ try:
             
                 if np.sum(np.less(player_total_losses, best)) == len(PLAYERS): # All players must have improved
                     best = player_total_losses
-                    saver.save(sess, os.path.join(save_dir, 'model.ckpt'))
+                    saver.save(sess, os.path.join(save_dir, 'model_{}.ckpt'.format(step)))
                     print(print_line + " *** new best ***")
                 else:
                     print(print_line)
