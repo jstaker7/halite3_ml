@@ -16,6 +16,7 @@ def build_model(inference=False, num_players=1, learning_rate=None, fine_tune=Fa
     if not inference:
         my_ships = tf.placeholder(tf.uint8, [None, 128, 128, 1])
         moves = tf.placeholder(tf.uint8, [None, 128, 128, 1])
+        has_construct = moves == 5
         generate = tf.placeholder(tf.float32, [None, 1])
         will_have_ship = tf.placeholder(tf.float32, [None, 128, 128, 1])
         should_construct = tf.placeholder(tf.float32, [None, 1])
@@ -241,6 +242,12 @@ def build_model(inference=False, num_players=1, learning_rate=None, fine_tune=Fa
                                                 logits=will_have_ship_logits)
 
     losses = tf.expand_dims(losses, -1)
+    
+    reweight = tf.cast(tf.expand_dims(has_construct, -1), tf.float32)
+    counter = tf.cast(tf.expand_dims(tf.bitwise.invert(has_construct), -1), tf.float32)
+    
+    losses = (losses * counter) + (losses * 5 * reweight)
+    print(losses.get_shape())
 
     if True:
         kernel = [[[0, 0, 0], [0, 1, 0], [0, 0, 0]],
