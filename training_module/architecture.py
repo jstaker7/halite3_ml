@@ -244,7 +244,7 @@ def build_model(inference=False, num_players=1, learning_rate=None, fine_tune=Fa
     losses = tf.expand_dims(losses, -1)
     
     reweight = tf.cast(tf.expand_dims(has_construct, -1), tf.float32)
-    counter = tf.cast(tf.expand_dims(tf.bitwise.invert(has_construct), -1), tf.float32)
+    counter = 1. - reweight
     
     losses = (losses * counter) + (losses * 5 * reweight)
     print(losses.get_shape())
