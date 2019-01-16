@@ -176,8 +176,8 @@ for player in PLAYERS:
 # NEXT: Fix workers
 
 
-min_buffer_size = 5000
-max_buffer_size = 8000
+min_buffer_size = 2500
+max_buffer_size = 4000
 batch_size = 6
 
 #min_buffer_size = 500
