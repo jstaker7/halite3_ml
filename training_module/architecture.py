@@ -246,8 +246,7 @@ def build_model(inference=False, num_players=1, learning_rate=None, fine_tune=Fa
     reweight = tf.cast(tf.expand_dims(has_construct, -1), tf.float32)
     counter = 1. - reweight
     
-    losses = (losses * counter) + (losses * 5 * reweight)
-    print(losses.get_shape())
+    #losses = (losses * counter) + (losses * 5 * reweight)
 
     if True:
         kernel = [[[0, 0, 0], [0, 1, 0], [0, 0, 0]],

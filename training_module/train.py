@@ -63,35 +63,45 @@ with gzip.open(os.path.join(replay_root, 'INDEX.pkl'), 'rb') as infile:
     master_index = pickle.load(infile)
 
 PLAYERS = [
-            {'pname': 'TheDuck314',
-             'versions': [53],
-             },
+#            {'pname': 'TheDuck314',
+#             'versions': [53],
+#             },
            
 #            {'pname': 'teccles',
 #             'versions': list(range(96, 104)) + [105, 107, 108, 128, 130, 131] + list(range(111, 117)) + list(range(118, 127)),
 #             #'versions': [131],
 #             },
 
-#            {'pname': 'teccles',
-#             'versions': [135],
-#             },
-#
-#            {'pname': 'teccles',
-#             'versions': [138],
-#             },
-#
-#            {'pname': 'teccles',
-#             'versions': [139],
-#             },
-           
-#            {'pname': 'cowzow',
-#             #'versions': [8, 9, 10],
-#             'versions': [10],
-#             },
+            {'pname': 'teccles',
+             'versions': [135],
+             },
 
-#            {'pname': 'reCurs3',
-#             'versions': [113, 114, 115, 117, 120, 125, 126, 127, 128],
-#             },
+            {'pname': 'teccles',
+             'versions': [138],
+             },
+
+            {'pname': 'teccles',
+             'versions': [139],
+             },
+           
+            {'pname': 'cowzow',
+             #'versions': [8, 9, 10],
+             'versions': [11],
+             },
+
+            {'pname': 'reCurs3',
+             'versions': [255],
+             },
+
+            {'pname': 'SiestaGuru',
+             'versions': [278],
+             },
+           
+            {'pname': 'SiestaGuru',
+             'versions': [272],
+             },
+
+           
 ]
 
 #PLAYERS = [
@@ -168,7 +178,7 @@ for player in PLAYERS:
 
 min_buffer_size = 5000
 max_buffer_size = 8000
-batch_size = 32
+batch_size = 6
 
 #min_buffer_size = 500
 #max_buffer_size = 800
