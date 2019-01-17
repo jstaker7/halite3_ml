@@ -178,7 +178,7 @@ for player in PLAYERS:
 
 min_buffer_size = 2500
 max_buffer_size = 4000
-batch_size = 6
+batch_size = 4
 
 #min_buffer_size = 500
 #max_buffer_size = 800
@@ -527,9 +527,9 @@ try:
                 
                 #new_losses = []
                 
-                player_print = " ".join(["{:.2f}/{:.2f}/{:.2f}/{:.2f}/{:.2f}/{:.3f}".format(x,y,z,j,k,l) for x,y,z,j,k,l in zip(player_average_frame_losses, player_gen_losses, player_have_ship_losses, player_should_construct_losses, player_did_win_losses, player_total_losses)])
+                player_print = " ".join(["{:.3f}/{:.3f}".format(x,y) for x,y in zip(player_average_frame_losses, player_gen_losses)])
                 
-                print_line = "{} T: {:.3f} {:.6f} V: ".format(step, np.mean(losses[-1000:]), np.mean(reg_losses[-1000:])) + player_print
+                print_line = "{} T: {:.3f} V: ".format(step, np.mean(losses[-1000:])) + player_print
             
                 if np.sum(np.less(player_total_losses, best)) == len(PLAYERS): # All players must have improved
                     best = player_total_losses
