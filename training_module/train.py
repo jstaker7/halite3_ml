@@ -66,41 +66,41 @@ PLAYERS = [
 #            {'pname': 'TheDuck314',
 #             'versions': [53],
 #             },
-           
-#            {'pname': 'teccles',
-#             'versions': list(range(96, 104)) + [105, 107, 108, 128, 130, 131] + list(range(111, 117)) + list(range(118, 127)),
-#             #'versions': [131],
-#             },
 
             {'pname': 'teccles',
-             'versions': [135],
-             },
-
-            {'pname': 'teccles',
-             'versions': [138],
-             },
-
-            {'pname': 'teccles',
-             'versions': [139],
+             'versions': [146],
              },
            
             {'pname': 'cowzow',
              #'versions': [8, 9, 10],
-             'versions': [11],
+             'versions': [18],
+             },
+           
+             #abener 149
+           
+            {'pname': 'AndersGee',
+             'versions': [170],
              },
 
             {'pname': 'reCurs3',
-             'versions': [255],
-             },
-
-            {'pname': 'SiestaGuru',
              'versions': [278],
              },
            
-            {'pname': 'SiestaGuru',
-             'versions': [272],
+            {'pname': 'reCurs3',
+             'versions': [279],
+             },
+           
+            {'pname': 'reCurs3',
+             'versions': [282],
+             },
+           
+            {'pname': 'reCurs3',
+             'versions': [285],
              },
 
+            {'pname': 'SiestaGuru',
+             'versions': [312],
+             },
            
 ]
 

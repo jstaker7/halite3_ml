@@ -4,7 +4,7 @@ import tensorflow as tf
 
 from training_module.architecture import build_model
 
-build_model(True, 1)
+build_model(True, 7)
 
 #root = '/Users/Peace/Projects/halite3_ml/bots/duck_larger/'
 #root = '/Users/Peace/Documents/models'
