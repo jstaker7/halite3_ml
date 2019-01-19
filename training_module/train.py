@@ -430,9 +430,9 @@ try:
             #print(np.sum(s_batch))
             
             T = 400000
-            M = 10#20#2 #T/20000
+            M = 8#20#2 #T/20000
             t = step
-            lr = (0.0006/2.)*(np.cos(np.pi*np.mod(t - 1, T/M)/(T/M)) + 1)
+            lr = (0.0002)*(np.cos(np.pi*np.mod(t - 1, T/M)/(T/M)) + 1)
 
             feed_dict = {frames_node: f_batch,
                          my_player_features_node: c_batch,
