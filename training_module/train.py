@@ -124,7 +124,7 @@ PLAYERS = [
              },
            
             {'pname': 'SiestaGuru',
-             'versions': [317],
+             'versions': [314],
              },
            
 ]
