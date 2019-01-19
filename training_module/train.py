@@ -82,10 +82,6 @@ PLAYERS = [
             {'pname': 'AndersGee',
              'versions': [172],
              },
-
-            {'pname': 'reCurs3',
-             'versions': [297],
-             },
            
             {'pname': 'reCurs3',
              'versions': [294],
