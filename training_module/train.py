@@ -84,7 +84,7 @@ PLAYERS = [
              },
            
             {'pname': 'reCurs3',
-             'versions': [294],
+             'versions': [288],
              },
            
             {'pname': 'reCurs3',
@@ -92,27 +92,7 @@ PLAYERS = [
              },
            
             {'pname': 'reCurs3',
-             'versions': [288],
-             },
-           
-            {'pname': 'reCurs3',
-             'versions': [285],
-             },
-           
-            {'pname': 'reCurs3',
-             'versions': [284],
-             },
-           
-            {'pname': 'reCurs3',
-             'versions': [282],
-             },
-           
-            {'pname': 'reCurs3',
-             'versions': [279],
-             },
-           
-            {'pname': 'reCurs3',
-             'versions': [278],
+             'versions': [278, 279, 282, 284, 285, 294],
              },
 
             {'pname': 'SiestaGuru',
@@ -348,10 +328,10 @@ processes = []
 for player in PLAYERS:
 
     # 5 queues, 1 for each map size (to improve compute efficiency)
-    queues = [Queue(32) for _ in range(5)]
+    queues = [Queue(2) for _ in range(5)]
     queue_m_sizes = [32, 40, 48, 56, 64]
 
-    v_queues = [Queue(32) for _ in range(5)]
+    v_queues = [Queue(2) for _ in range(5)]
     v_queue_m_sizes = [32, 40, 48, 56, 64]
 
     batch_queue = Queue(2)
