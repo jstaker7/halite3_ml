@@ -72,22 +72,39 @@ PLAYERS = [
              },
            
             {'pname': 'cowzow',
-             #'versions': [8, 9, 10],
              'versions': [18],
              },
            
-             #abener 149
+            {'pname': 'abenner',
+             'versions': [149],
+             },
            
             {'pname': 'AndersGee',
-             'versions': [170],
+             'versions': [172],
              },
 
             {'pname': 'reCurs3',
-             'versions': [278],
+             'versions': [297],
              },
            
             {'pname': 'reCurs3',
-             'versions': [279],
+             'versions': [294],
+             },
+           
+            {'pname': 'reCurs3',
+             'versions': [290],
+             },
+           
+            {'pname': 'reCurs3',
+             'versions': [288],
+             },
+           
+            {'pname': 'reCurs3',
+             'versions': [285],
+             },
+           
+            {'pname': 'reCurs3',
+             'versions': [284],
              },
            
             {'pname': 'reCurs3',
@@ -95,11 +112,23 @@ PLAYERS = [
              },
            
             {'pname': 'reCurs3',
-             'versions': [285],
+             'versions': [279],
+             },
+           
+            {'pname': 'reCurs3',
+             'versions': [278],
              },
 
             {'pname': 'SiestaGuru',
              'versions': [312],
+             },
+           
+            {'pname': 'SiestaGuru',
+             'versions': [313],
+             },
+           
+            {'pname': 'SiestaGuru',
+             'versions': [317],
              },
            
 ]
@@ -176,9 +205,9 @@ for player in PLAYERS:
 # NEXT: Fix workers
 
 
-min_buffer_size = 2500
-max_buffer_size = 4000
-batch_size = 4
+min_buffer_size = 1000
+max_buffer_size = 2000
+batch_size = 2
 
 #min_buffer_size = 500
 #max_buffer_size = 800
