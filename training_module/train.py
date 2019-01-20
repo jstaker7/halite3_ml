@@ -458,7 +458,7 @@ try:
             reg_loss = 0
             losses.append(loss)
             reg_losses.append(reg_loss)
-            if step % 2500 == 0:
+            if step % 1250 == 0:
                 player_gen_losses = []
                 player_average_frame_losses = []
                 player_total_losses = []
