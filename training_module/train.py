@@ -155,6 +155,8 @@ for player in PLAYERS:
     player['valid'] = valid
     print("{} num train: {} num valid: {}".format(player['pname'], len(train), len(valid)))
 
+del master_index
+
 #assert keep, print(len(keep))
 
 # Test speed before MP
@@ -177,8 +179,8 @@ for player in PLAYERS:
 # NEXT: Fix workers
 
 
-min_buffer_size = 3000
-max_buffer_size = 8000
+min_buffer_size = 2000
+max_buffer_size = 4000
 batch_size = 6
 
 #min_buffer_size = 500
