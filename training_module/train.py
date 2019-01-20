@@ -68,7 +68,7 @@ PLAYERS = [
 #             },
 
             {'pname': 'teccles',
-             'versions': [152],
+             'versions': [146],
              },
            
             {'pname': 'cowzow',
