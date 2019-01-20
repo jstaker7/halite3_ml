@@ -67,44 +67,36 @@ PLAYERS = [
 #             'versions': [53],
 #             },
 
-            {'pname': 'teccles',
-             'versions': [146],
-             },
+#            {'pname': 'teccles',
+#             'versions': [146],
+#             },
            
             {'pname': 'cowzow',
              'versions': [18],
              },
            
-            {'pname': 'abenner',
-             'versions': [149],
-             },
-           
-            {'pname': 'AndersGee',
-             'versions': [172],
-             },
+#            {'pname': 'abenner',
+#             'versions': [149],
+#             },
+#
+#            {'pname': 'AndersGee',
+#             'versions': [172],
+#             },
            
             {'pname': 'reCurs3',
              'versions': [288],
              },
            
             {'pname': 'reCurs3',
-             'versions': [290],
-             },
-           
-            {'pname': 'reCurs3',
-             'versions': [278, 279, 282, 284, 285, 294],
+             'versions': [278, 279, 282, 284, 285, 290, 294],
              },
 
             {'pname': 'SiestaGuru',
-             'versions': [312],
+             'versions': [327],
              },
            
             {'pname': 'SiestaGuru',
-             'versions': [313],
-             },
-           
-            {'pname': 'SiestaGuru',
-             'versions': [314],
+             'versions': [312, 313, 314, 317],
              },
            
 ]
@@ -181,9 +173,9 @@ for player in PLAYERS:
 # NEXT: Fix workers
 
 
-min_buffer_size = 1000
-max_buffer_size = 2000
-batch_size = 2
+min_buffer_size = 3000
+max_buffer_size = 8000
+batch_size = 8
 
 #min_buffer_size = 500
 #max_buffer_size = 800
@@ -390,7 +382,7 @@ did_win_node = tf.get_collection('did_win')[0]
 #config.gpu_options.allow_growth = True
 gpu_options = tf.GPUOptions(per_process_gpu_memory_fraction=0.95)
 config=tf.ConfigProto(gpu_options=gpu_options)
-saver = tf.train.Saver()
+saver = tf.train.Saver(max_to_keep=None)
 #best = np.ones((len(PLAYERS), ), dtype=np.int32)*999
 best = np.array([999 for _ in range(len(PLAYERS))])
 try:
@@ -435,9 +427,9 @@ try:
             #print(np.sum(s_batch))
             
             T = 400000
-            M = 8#20#2 #T/20000
+            M = 10#20#2 #T/20000
             t = step
-            lr = (0.0002)*(np.cos(np.pi*np.mod(t - 1, T/M)/(T/M)) + 1)
+            lr = (0.0005)*(np.cos(np.pi*np.mod(t - 1, T/M)/(T/M)) + 1)
 
             feed_dict = {frames_node: f_batch,
                          my_player_features_node: c_batch,

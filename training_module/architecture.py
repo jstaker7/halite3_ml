@@ -204,11 +204,11 @@ def build_model(inference=False, num_players=1, learning_rate=None, fine_tune=Fa
     tf.add_to_collection('m_logits', tf.stack(player_move_logits))
     tf.add_to_collection('g_logits', tf.stack(player_generate_logits))
     tf.add_to_collection('m_probs', tf.nn.softmax(tf.stack(player_move_logits)))
+    tf.add_to_collection('latent', latent)
     
     if inference:
         return
 
-    tf.add_to_collection('latent', latent)
     tf.add_to_collection('m_probs_raw', tf.stack(player_move_logits))
     
     tf.add_to_collection('h_logits', tf.nn.sigmoid(tf.stack(player_will_have_ship_logits)))
