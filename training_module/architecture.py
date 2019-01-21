@@ -150,10 +150,7 @@ def build_model(inference=False, num_players=1, learning_rate=None, fine_tune=Fa
     u_l2_s_1_pre = tf.layers.conv2d(u_l2_c, 32, 3, activation=None, padding='same', name='c33')
     u_l2_s_1 = tf.nn.relu(u_l2_s_1_pre)
     u_l2_s_1 = tf.layers.batch_normalization(u_l2_s_1, training=is_training, name='bn24')
-
-    u_l2_s_1 = tf.layers.conv2d(u_l2_s_1, 32, 3, activation=tf.nn.relu, padding='same', name='c33bb')
-    u_l2_s_1 = tf.layers.batch_normalization(u_l2_s_1, training=is_training, name='bn24bb')
-
+    
     u_l2_s_2_pre = tf.layers.conv2d(u_l2_s_1, 32, 3, activation=None, padding='same', name='c34')
     u_l2_s_2 = tf.nn.relu(u_l2_s_2_pre)
     u_l2_s_2 = tf.layers.batch_normalization(u_l2_s_2, training=is_training, name='bn26')
@@ -161,7 +158,7 @@ def build_model(inference=False, num_players=1, learning_rate=None, fine_tune=Fa
     #u_l2_s_3_c = u_l2_s_1_pre + u_l2_s_3_pre
     u_l2_s_3 = tf.nn.relu(u_l2_s_3_pre)
     u_l2_s_3 = tf.layers.batch_normalization(u_l2_s_3, training=is_training, name='bn27')
-    u_l2_s_4 = tf.layers.conv2d(u_l2_s_3, 64, 3, activation=tf.nn.relu, padding='same', name='c36')
+    u_l2_s_4 = tf.layers.conv2d(u_l2_s_3, 32, 3, activation=tf.nn.relu, padding='same', name='c36')
     u_l2_s_4 = tf.layers.batch_normalization(u_l2_s_4, training=is_training, name='bn28')
 
     player_generate_logits = []
@@ -181,7 +178,7 @@ def build_model(inference=False, num_players=1, learning_rate=None, fine_tune=Fa
         generate_logits = tf.layers.dense(gen_latent, 1, activation=None, name='c40_{}'.format(i))
         generate_logits = tf.squeeze(generate_logits, [1, 2])
 
-        moves_latent = tf.layers.conv2d(u_l2_s_4, 64, 1, activation=tf.nn.relu, padding='same', name='c41c_{}'.format(i))
+        moves_latent = tf.layers.conv2d(u_l2_s_4, 32, 1, activation=tf.nn.relu, padding='same', name='c41c_{}'.format(i))
         moves_latent = tf.layers.batch_normalization(moves_latent, training=is_training, name='bn41_{}'.format(i))
 #        moves_latent = tf.layers.conv2d(moves_latent, 128, 1, activation=tf.nn.relu, padding='same', name='c41d_{}'.format(i))
         moves_logits = tf.layers.conv2d(moves_latent, 6, 1, activation=None, padding='same', name='c42_{}'.format(i))
@@ -341,8 +338,11 @@ def build_model(inference=False, num_players=1, learning_rate=None, fine_tune=Fa
     
         update_ops = tf.get_collection(tf.GraphKeys.UPDATE_OPS)
         with tf.control_dependencies(update_ops):
-            optimizer = tf.train.AdamOptimizer(learning_rate).minimize(loss)
-            #optimizer = tf.contrib.opt.AdamWOptimizer(0.0000001, learning_rate)
+            optimizer = tf.train.AdamOptimizer(learning_rate)#.minimize(loss)
+
+            gradients, variables = zip(*optimizer.compute_gradients(loss))
+            gradients, _ = tf.clip_by_global_norm(gradients, 1.0)
+            optimizer = optimizer.apply_gradients(zip(gradients, variables))
 
 
         #tf.add_to_collection('L2_loss', L2_loss)
