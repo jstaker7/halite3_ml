@@ -162,7 +162,7 @@ def build_model(inference=False, num_players=1, learning_rate=None, fine_tune=Fa
     player_did_win_logits = []
     
     for i in range(num_players):
-    #for i in [3, 5]:
+    #for i in [3, 4, 6]:
         #i = 0 # to choose player
 
         gen_latent1 = tf.layers.dense(latent, 64, activation=tf.nn.relu, name='c39_{}'.format(i))
