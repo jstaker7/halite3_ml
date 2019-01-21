@@ -165,14 +165,14 @@ def build_model(inference=False, num_players=1, learning_rate=None, fine_tune=Fa
     #for i in [3, 5]:
         #i = 0 # to choose player
 
-        gen_latent1 = tf.layers.dense(latent, 32, activation=tf.nn.relu, name='c39_{}'.format(i))
+        gen_latent1 = tf.layers.dense(latent, 64, activation=tf.nn.relu, name='c39_{}'.format(i))
         gen_latent1 = tf.layers.batch_normalization(gen_latent1, training=is_training, name='bn39_{}'.format(i))
-        gen_latent = tf.layers.dense(gen_latent1, 16, activation=tf.nn.relu, name='c39b_{}'.format(i))
+        gen_latent = tf.layers.dense(gen_latent1, 32, activation=tf.nn.relu, name='c39b_{}'.format(i))
         gen_latent = tf.layers.batch_normalization(gen_latent, training=is_training, name='bn40_{}'.format(i))
         generate_logits = tf.layers.dense(gen_latent, 1, activation=None, name='c40_{}'.format(i))
         generate_logits = tf.squeeze(generate_logits, [1, 2])
 
-        moves_latent = tf.layers.conv2d(u_l2_s_2, 32, 1, activation=tf.nn.relu, padding='same', name='c41c_{}'.format(i))
+        moves_latent = tf.layers.conv2d(u_l2_s_2, 64, 1, activation=tf.nn.relu, padding='same', name='c41c_{}'.format(i))
         moves_latent = tf.layers.batch_normalization(moves_latent, training=is_training, name='bn41_{}'.format(i))
 #        moves_latent = tf.layers.conv2d(moves_latent, 128, 1, activation=tf.nn.relu, padding='same', name='c41d_{}'.format(i))
         moves_logits = tf.layers.conv2d(moves_latent, 6, 1, activation=None, padding='same', name='c42_{}'.format(i))
@@ -186,8 +186,8 @@ def build_model(inference=False, num_players=1, learning_rate=None, fine_tune=Fa
            # will_have_ship_latent = tf.layers.conv2d(will_have_ship_latent, 128, 1, activation=tf.nn.relu, padding='same', name='c45d_{}'.format(i))
             will_have_ship_logits = tf.layers.conv2d(will_have_ship_latent, 1, 1, activation=None, padding='same', name='c46_{}'.format(i))
 
-            did_win_latent1 = tf.layers.dense(latent, 32, activation=tf.nn.relu, name='c47_{}'.format(i))
-            did_win_latent = tf.layers.dense(did_win_latent1, 16, activation=tf.nn.relu, name='c47b_{}'.format(i))
+            did_win_latent1 = tf.layers.dense(latent, 128, activation=tf.nn.relu, name='c47_{}'.format(i))
+            did_win_latent = tf.layers.dense(did_win_latent1, 128, activation=tf.nn.relu, name='c47b_{}'.format(i))
             did_win_logits = tf.layers.dense(did_win_latent, 1, activation=None, name='c48_{}'.format(i))
             did_win_logits = tf.squeeze(did_win_logits, [1, 2])
 
@@ -313,7 +313,7 @@ def build_model(inference=False, num_players=1, learning_rate=None, fine_tune=Fa
     should_construct_losses = tf.reduce_mean(should_construct_losses) # TODO: do I need to add to frames before averaging?
     did_win_losses = tf.reduce_mean(did_win_losses) # TODO: do I need to add to frames before averaging?
 
-    loss = tf.reduce_mean(average_frame_loss) + 0.05*generate_losses + 0.001*tf.reduce_mean(have_ship_average_frame_loss) + 0.0000000000001*should_construct_losses + 0.0000000000001 * did_win_losses
+    loss = tf.reduce_mean(average_frame_loss) + 0.05*generate_losses + 0.001*tf.reduce_mean(have_ship_average_frame_loss) + 0.0000000000001*should_construct_losses + 0.000000000001 * did_win_losses
 
 #    loss = tf.reduce_mean(average_frame_loss) + 0.0000000005*generate_losses + 0.0000000005*tf.reduce_mean(have_ship_average_frame_loss) + 0.0000000005*should_construct_losses + 0.0000000000001 * did_win_losses
 
