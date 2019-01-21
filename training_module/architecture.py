@@ -146,13 +146,11 @@ def build_model(inference=False, num_players=1, learning_rate=None, fine_tune=Fa
 
     u_l2_a = tf.layers.conv2d_transpose(u_l3_s, 64, 3, 2, activation=tf.nn.relu, padding='same', name='c32') # 128
     u_l2_c = u_l2_a + d_l2_a_1_pre
-    u_l2_s_1_pre = tf.layers.conv2d(u_l2_c, 64, 3, activation=None, padding='same', name='c33')
-    u_l2_s_1 = tf.nn.relu(u_l2_s_1_pre)
+    u_l2_s_1 = tf.layers.conv2d(u_l2_c, 64, 3, activation=tf.nn.relu, padding='same', name='c33')
     u_l2_s_1 = tf.layers.batch_normalization(u_l2_s_1, training=is_training, name='bn24')
-    
-    u_l2_s_2 = tf.layers.conv2d(u_l2_s_1, 64, 3, activation=None, padding='same', name='c34')
+    u_l2_s_2 = tf.layers.conv2d(u_l2_s_1, 64, 3, activation=tf.nn.relu, padding='same', name='c34')
     u_l2_s_2 = tf.layers.batch_normalization(u_l2_s_2, training=is_training, name='bn26')
-    u_l2_s_2 = tf.layers.conv2d(u_l2_s_2, 64, 3, activation=None, padding='same', name='c35')
+    u_l2_s_2 = tf.layers.conv2d(u_l2_s_2, 64, 3, activation=tf.nn.relu, padding='same', name='c35')
     u_l2_s_2 = tf.layers.batch_normalization(u_l2_s_2, training=is_training, name='bn27')
     u_l2_s_2 = tf.layers.conv2d(u_l2_s_2, 64, 3, activation=tf.nn.relu, padding='same', name='c36')
     u_l2_s_2 = tf.layers.batch_normalization(u_l2_s_2, training=is_training, name='bn28')
