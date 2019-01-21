@@ -11,7 +11,7 @@ import tensorflow as tf
 
 import shutil
 
-num_per_update = 2
+num_per_update = 6
 map_sizes = [32, 40, 48, 56, 64]
 num_players = [2, 4]
 
@@ -21,7 +21,7 @@ if os.path.exists('/Users/Peace'):
     outdir = '/Users/Peace/Projects/halite_games'
     save_template = '/Users/Peace/Projects/halite3_ml/bots/rl_model/model_{}.ckpt'
 else:
-    bot_cmd = '"python /home/staker/Projects/halite/rl_stuff/rl1/MyBot.py"'
+    bot_cmd = '"export CUDA_VISIBLE_DEVICES="" && python /home/staker/Projects/halite/rl_stuff/rl1/MyBot.py"'
     engine = '/home/staker/Projects/halite/rl_stuff/halite'
     outdir = '/home/staker/Projects/halite/rl_stuff/halite_games'
     save_template = '/home/staker/Projects/halite/rl_stuff/rl_model/model_{}.ckpt'
@@ -51,7 +51,7 @@ def run_game(_):
     process.wait()
 
 with tf.variable_scope("reinforcement"):
-    state_node = tf.placeholder(tf.float32, [None, 64])
+    state_node = tf.placeholder(tf.float32, [None, 128])
     action_node = tf.placeholder(tf.uint8, [None, 1])
     did_win_node = tf.placeholder(tf.float32, [None, 1])
     is_training = tf.placeholder(tf.bool)
@@ -63,7 +63,7 @@ with tf.variable_scope("reinforcement"):
     rl_l2 = tf.layers.dense(rl_l1, 32, activation=tf.nn.relu, name='rl2')
     rl_l2 = tf.layers.batch_normalization(rl_l2, training=is_training, name='rlbn2')
 
-    num_production_players = 2
+    num_production_players = 3
     player_probs = tf.layers.dense(rl_l2, num_production_players, activation=None, name='pl_probs')
 
     tf.add_to_collection('player_probs', tf.nn.softmax(player_probs))
@@ -80,7 +80,7 @@ with tf.variable_scope("reinforcement"):
 
     update_ops = tf.get_collection(tf.GraphKeys.UPDATE_OPS)
     with tf.control_dependencies(update_ops):
-        optimizer = tf.train.AdamOptimizer(0.0001).minimize(loss)
+        optimizer = tf.train.AdamOptimizer(0.001).minimize(loss)
 
 if __name__ == '__main__':
     #count = multiprocessing.cpu_count()//3
@@ -93,7 +93,9 @@ if __name__ == '__main__':
         shutil.rmtree(outdir)
         os.mkdir(outdir)
 
-    batch_size = 256
+    batch_size = 9999
+    #gpu_options = tf.GPUOptions(per_process_gpu_memory_fraction=0.04)
+    #config = tf.ConfigProto(allow_soft_placement=False, gpu_options=gpu_options)
     with tf.Session() as sess:
         saver = tf.train.Saver()
     
