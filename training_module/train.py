@@ -369,7 +369,7 @@ did_win_node = tf.get_collection('did_win')[0]
 
 #config = tf.ConfigProto()
 #config.gpu_options.allow_growth = True
-gpu_options = tf.GPUOptions(per_process_gpu_memory_fraction=0.95)
+gpu_options = tf.GPUOptions(per_process_gpu_memory_fraction=0.75)
 config=tf.ConfigProto(gpu_options=gpu_options)
 saver = tf.train.Saver(max_to_keep=None)
 #best = np.ones((len(PLAYERS), ), dtype=np.int32)*999

@@ -157,7 +157,7 @@ def build_model(inference=False, num_players=1, learning_rate=None, fine_tune=Fa
     u_l2_s_3_c = u_l2_s_1_pre + u_l2_s_3_pre
     u_l2_s_3 = tf.nn.relu(u_l2_s_3_c)
     u_l2_s_3 = tf.layers.batch_normalization(u_l2_s_3, training=is_training, name='bn27')
-    u_l2_s_4 = tf.layers.conv2d(u_l2_s_3, 32, 3, activation=tf.nn.relu, padding='same', name='c36')
+    u_l2_s_4 = tf.layers.conv2d(u_l2_s_3, 64, 3, activation=tf.nn.relu, padding='same', name='c36')
     u_l2_s_4 = tf.layers.batch_normalization(u_l2_s_4, training=is_training, name='bn28')
 
     player_generate_logits = []
@@ -177,7 +177,7 @@ def build_model(inference=False, num_players=1, learning_rate=None, fine_tune=Fa
         generate_logits = tf.layers.dense(gen_latent, 1, activation=None, name='c40_{}'.format(i))
         generate_logits = tf.squeeze(generate_logits, [1, 2])
 
-        moves_latent = tf.layers.conv2d(u_l2_s_4, 32, 1, activation=tf.nn.relu, padding='same', name='c41c_{}'.format(i))
+        moves_latent = tf.layers.conv2d(u_l2_s_4, 64, 1, activation=tf.nn.relu, padding='same', name='c41c_{}'.format(i))
         moves_latent = tf.layers.batch_normalization(moves_latent, training=is_training, name='bn41_{}'.format(i))
 #        moves_latent = tf.layers.conv2d(moves_latent, 128, 1, activation=tf.nn.relu, padding='same', name='c41d_{}'.format(i))
         moves_logits = tf.layers.conv2d(moves_latent, 6, 1, activation=None, padding='same', name='c42_{}'.format(i))
@@ -187,7 +187,7 @@ def build_model(inference=False, num_players=1, learning_rate=None, fine_tune=Fa
             should_construct_logits = tf.layers.dense(should_construct_latent, 1, activation=None, name='c44_{}'.format(i))
             should_construct_logits = tf.squeeze(should_construct_logits, [1, 2])
         
-            will_have_ship_latent = tf.layers.conv2d(u_l2_s_4, 32, 1, activation=tf.nn.relu, padding='same', name='c45c_{}'.format(i))
+            will_have_ship_latent = tf.layers.conv2d(u_l2_s_4, 64, 1, activation=tf.nn.relu, padding='same', name='c45c_{}'.format(i))
            # will_have_ship_latent = tf.layers.conv2d(will_have_ship_latent, 128, 1, activation=tf.nn.relu, padding='same', name='c45d_{}'.format(i))
             will_have_ship_logits = tf.layers.conv2d(will_have_ship_latent, 1, 1, activation=None, padding='same', name='c46_{}'.format(i))
 
