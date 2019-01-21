@@ -64,13 +64,13 @@ with gzip.open(os.path.join(replay_root, 'INDEX.pkl'), 'rb') as infile:
 
 PLAYERS = [
 
-            {'pname': 'reCurs3',
-             'versions': [279],
-             },
+#            {'pname': 'reCurs3',
+#             'versions': [279],
+#             },
            
-            {'pname': 'reCurs3',
-             'versions': [288],
-             },
+#            {'pname': 'reCurs3',
+#             'versions': [288],
+#             },
            
             {'pname': 'reCurs3',
              'versions': [306],
@@ -84,13 +84,13 @@ PLAYERS = [
              'versions': [327],
              },
            
-            {'pname': 'SiestaGuru',
-             'versions': [312],
-             },
-           
-            {'pname': 'SiestaGuru',
-             'versions': [313],
-             },
+#            {'pname': 'SiestaGuru',
+#             'versions': [312],
+#             },
+#           
+#            {'pname': 'SiestaGuru',
+#             'versions': [313],
+#             },
            
             {'pname': 'SiestaGuru',
              'versions': [317],
