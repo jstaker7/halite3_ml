@@ -150,12 +150,16 @@ def build_model(inference=False, num_players=1, learning_rate=None, fine_tune=Fa
     u_l2_s_1_pre = tf.layers.conv2d(u_l2_c, 32, 3, activation=None, padding='same', name='c33')
     u_l2_s_1 = tf.nn.relu(u_l2_s_1_pre)
     u_l2_s_1 = tf.layers.batch_normalization(u_l2_s_1, training=is_training, name='bn24')
+
+    u_l2_s_1 = tf.layers.conv2d(u_l2_s_1, 32, 3, activation=tf.nn.relu, padding='same', name='c33bb')
+    u_l2_s_1 = tf.layers.batch_normalization(u_l2_s_1, training=is_training, name='bn24bb')
+
     u_l2_s_2_pre = tf.layers.conv2d(u_l2_s_1, 32, 3, activation=None, padding='same', name='c34')
     u_l2_s_2 = tf.nn.relu(u_l2_s_2_pre)
     u_l2_s_2 = tf.layers.batch_normalization(u_l2_s_2, training=is_training, name='bn26')
     u_l2_s_3_pre = tf.layers.conv2d(u_l2_s_2, 32, 3, activation=None, padding='same', name='c35')
-    u_l2_s_3_c = u_l2_s_1_pre + u_l2_s_3_pre
-    u_l2_s_3 = tf.nn.relu(u_l2_s_3_c)
+    #u_l2_s_3_c = u_l2_s_1_pre + u_l2_s_3_pre
+    u_l2_s_3 = tf.nn.relu(u_l2_s_3_pre)
     u_l2_s_3 = tf.layers.batch_normalization(u_l2_s_3, training=is_training, name='bn27')
     u_l2_s_4 = tf.layers.conv2d(u_l2_s_3, 64, 3, activation=tf.nn.relu, padding='same', name='c36')
     u_l2_s_4 = tf.layers.batch_normalization(u_l2_s_4, training=is_training, name='bn28')
