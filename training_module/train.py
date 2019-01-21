@@ -63,36 +63,21 @@ with gzip.open(os.path.join(replay_root, 'INDEX.pkl'), 'rb') as infile:
     master_index = pickle.load(infile)
 
 PLAYERS = [
-#            {'pname': 'TheDuck314',
-#             'versions': [53],
-#             },
 
-            {'pname': 'teccles',
-             'versions': [146],
+            {'pname': 'reCurs3',
+             'versions': [279],
              },
-           
-            {'pname': 'teccles',
-             'versions': [152],
-             },
-           
-            {'pname': 'cowzow',
-             'versions': [18],
-             },
-           
-#            {'pname': 'abenner',
-#             'versions': [149],
-#             },
-#
-#            {'pname': 'AndersGee',
-#             'versions': [172],
-#             },
            
             {'pname': 'reCurs3',
              'versions': [288],
              },
            
             {'pname': 'reCurs3',
-             'versions': [278, 279, 282, 284, 285, 290, 294],
+             'versions': [306],
+             },
+           
+            {'pname': 'reCurs3',
+             'versions': [297],
              },
 
             {'pname': 'SiestaGuru',
@@ -100,19 +85,17 @@ PLAYERS = [
              },
            
             {'pname': 'SiestaGuru',
-             'versions': [312, 313, 314, 317],
+             'versions': [312],
              },
            
+            {'pname': 'SiestaGuru',
+             'versions': [313],
+             },
+           
+            {'pname': 'SiestaGuru',
+             'versions': [317],
+             },
 ]
-
-#PLAYERS = [
-#            {'pname': 'Counterbalance',
-#             'versions': list(range(200)),
-#             },
-#            {'pname': 'Hjax',
-#             'versions': list(range(200)),
-#             },
-#]
 
 in_train = set()
 in_valid = set()
@@ -179,9 +162,9 @@ del master_index
 # NEXT: Fix workers
 
 
-min_buffer_size = 2000
+min_buffer_size = 2500
 max_buffer_size = 4000
-batch_size = 6
+batch_size = 4
 
 #min_buffer_size = 500
 #max_buffer_size = 800
@@ -435,7 +418,7 @@ try:
             T = 400000
             M = 10#20#2 #T/20000
             t = step
-            lr = (0.0005)*(np.cos(np.pi*np.mod(t - 1, T/M)/(T/M)) + 1)
+            lr = (0.0003)*(np.cos(np.pi*np.mod(t - 1, T/M)/(T/M)) + 1)
 
             feed_dict = {frames_node: f_batch,
                          my_player_features_node: c_batch,
@@ -464,7 +447,7 @@ try:
             reg_loss = 0
             losses.append(loss)
             reg_losses.append(reg_loss)
-            if step % 1250 == 0:
+            if (step + 1) % 1250 == 0 or step == 0:
                 player_gen_losses = []
                 player_average_frame_losses = []
                 player_total_losses = []
