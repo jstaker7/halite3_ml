@@ -2,7 +2,7 @@ import pickle
 import gzip
 import time
 from random import shuffle
-#from multiprocessing import Process, Queue
+
 import os
 from threading import Thread
 from queue import Queue, PriorityQueue
@@ -11,43 +11,14 @@ import copy
 import numpy as np
 import tensorflow as tf
 
-from core.data_utils import Game
+from training_module.data_utils import Game
 
 from training_module.architecture import build_model
 
 np.random.seed(8)
 
-RESTORE = False#True
+RESTORE = False
 RESTORE_WHICH = '4'
-
-# Given history of frames
-# 1) Predict which player is which
-# 2) Keep a history vector
-# 4)
-
-# U-net convolve
-# Latent vector gets passed into RNN to update state
-# U-net deconvolve + state to make pixel predictions
-# Truncated history of only X frames (to both decorrelate, and b/c that much
-# histrory won't affect the bots much.
-# Once a model is trained on top N players, us RL to select which player to
-# base the next move off of.
-# Consider pretraining the u-net (or ladder net style) with more data if needed.
-# Fine-tune train as player bots get updated
-
-#receptive_field_size = 3
-
-# Ensure that the frame wraps along edges
-
-# Potentially learn a reconstruction error to capture many states (of gold only)
-
-# Start with greedy (single convolution)
-
-# load the replay index
-#with gzip.open('/Users/Peace/Desktop/replays/INDEX.pkl', 'rb') as infile:
-#    master_index = pickle.load(infile)
-#
-#print(master_index.keys())
 
 replay_root = '/Users/Peace/Desktop/replays'
 
@@ -63,37 +34,32 @@ with gzip.open(os.path.join(replay_root, 'INDEX.pkl'), 'rb') as infile:
     master_index = pickle.load(infile)
 
 PLAYERS = [
+            {'pname': 'teccles',
+             'versions': [135],
+             },
 
-#            {'pname': 'reCurs3',
-#             'versions': [279],
-#             },
-           
-#            {'pname': 'reCurs3',
-#             'versions': [288],
-#             },
-           
-            {'pname': 'reCurs3',
-             'versions': [306],
+            {'pname': 'teccles',
+             'versions': [138],
+             },
+
+            {'pname': 'teccles',
+             'versions': [139],
              },
            
+            {'pname': 'cowzow',
+             'versions': [11],
+             },
+
             {'pname': 'reCurs3',
-             'versions': [297],
+             'versions': [255],
              },
 
             {'pname': 'SiestaGuru',
-             'versions': [327],
+             'versions': [278],
              },
            
-#            {'pname': 'SiestaGuru',
-#             'versions': [312],
-#             },
-#
-#            {'pname': 'SiestaGuru',
-#             'versions': [313],
-#             },
-           
             {'pname': 'SiestaGuru',
-             'versions': [317],
+             'versions': [272],
              },
 ]
 
@@ -140,36 +106,9 @@ for player in PLAYERS:
 
 del master_index
 
-#assert keep, print(len(keep))
-
-# Test speed before MP
-#for rp in keep:
-#    path = '/Users/Peace/Desktop/replays/{}/{}'
-#    day = rp.replace('ts2018-halite-3-gold-replays_replay-', '').split('-')[0]
-#    path = path.format(day, rp)
-#
-#    game = Game()
-#    try:
-#        game.load_replay(path)
-#        frames, moves = game.get_training_frames(pname='Rachol')
-#        print(frames.shape, moves.shape)
-#    except:
-#        print('skipped')
-#        continue
-#
-#    print()
-
-# NEXT: Fix workers
-
-
 min_buffer_size = 2500
 max_buffer_size = 4000
 batch_size = 4
-
-#min_buffer_size = 500
-#max_buffer_size = 800
-#batch_size = 2
-
 
 def batch_prep(buffer, batch_queue):
     game = Game()
@@ -250,7 +189,7 @@ def worker(queue, size, pname, keep):
     # Note: Replay naming is not consistent (game id was added later)
     s_keep = [x for x in keep if int(x.split('-')[-2]) == size]
     print("{0} {1} maps with size {2}x{2}".format(pname, len(s_keep), size))
-    #buffer = []
+
     while True:
         which_game = np.random.choice(s_keep)
         path = os.path.join(replay_root, '{}', '{}')
@@ -275,12 +214,6 @@ def worker(queue, size, pname, keep):
         should_construct = copy.deepcopy(should_construct)
         did_win = copy.deepcopy(did_win)
         del game
-        
-#        frames = frames[:25]
-#        moves = moves[:25]
-#        generate = generate[:25]
-#        can_afford = can_afford[:25]
-#        turns_left = turns_left[:25]
 
         shapes = [frames.shape[0], moves.shape[0], generate.shape[0], my_player_features.shape[0], opponent_features.shape[0], will_have_ship.shape[0], should_construct.shape[0], did_win.shape[0]]
 
@@ -298,12 +231,6 @@ def worker(queue, size, pname, keep):
         del will_have_ship
         del should_construct
         del did_win
-    
-#        if len(buffer) > 10:
-#            shuffle(buffer)
-#            while len(buffer) > 0:
-#                queue.put(buffer.pop())
-        #queue.put(size)
 
 processes = []
 for player in PLAYERS:
@@ -361,18 +288,10 @@ did_win_losses_node = tf.get_collection('did_win_losses')[0]
 will_have_ship_node = tf.get_collection('will_have_ship')[0]
 should_construct_node = tf.get_collection('should_construct')[0]
 did_win_node = tf.get_collection('did_win')[0]
-#L2_loss_node = tf.get_collection('L2_loss')[0]
 
-
-
-#with open() # TODO: save out log
-
-#config = tf.ConfigProto()
-#config.gpu_options.allow_growth = True
 gpu_options = tf.GPUOptions(per_process_gpu_memory_fraction=0.75)
 config=tf.ConfigProto(gpu_options=gpu_options)
 saver = tf.train.Saver(max_to_keep=None)
-#best = np.ones((len(PLAYERS), ), dtype=np.int32)*999
 best = np.array([999 for _ in range(len(PLAYERS))])
 try:
     with tf.Session(config=config) as sess:
@@ -381,13 +300,6 @@ try:
         if RESTORE:
             print("Restoring...")
             saver.restore(sess, os.path.join('/home/staker/Projects/halite/trained_models/', RESTORE_WHICH, "model.ckpt"))
-        
-        # Training buffer to decorrelate examples seen in batches
-    #    buffer = []
-    #
-    #
-    #
-    #    assert len(buffer) > batch_size
 
         print("Training...")
         losses = []
@@ -410,13 +322,8 @@ try:
             b_batch = np.expand_dims(b_batch, -1)
             w_batch = np.expand_dims(w_batch, -1)
             
-
-            #print([x.shape for x in [f_batch, m_batch, g_batch, c_batch, t_batch, s_batch]])
-            
-            #print(np.sum(s_batch))
-            
             T = 400000
-            M = 10#20#2 #T/20000
+            M = 10
             t = step
             lr = (0.0006/2.)*(np.cos(np.pi*np.mod(t - 1, T/M)/(T/M)) + 1)
 
@@ -432,16 +339,6 @@ try:
                          should_construct_node: b_batch,
                          did_win_node: w_batch
                         }
-
-#            temp_node = tf.get_collection('temp')[0]
-#            print(f_batch[0, 55:65, 55:65, 1])
-#            print(m_batch[0, 55:65, 55:65, 0])
-#            temp = sess.run([temp_node], feed_dict=feed_dict)
-#            print(temp[0][0, 55:65, 55:65])
-#            print('fannty')
-#            import time
-#            time.sleep(1)
-#            continue
 
             loss, _ = sess.run([loss_node, optimizer_node], feed_dict=feed_dict)
             reg_loss = 0
@@ -511,8 +408,6 @@ try:
                 
                 assert player_total_losses.shape[0] == len(PLAYERS)
                 
-                #new_losses = []
-                
                 player_print = " ".join(["{:.3f}/{:.3f}".format(x,y) for x,y in zip(player_average_frame_losses, player_gen_losses)])
                 
                 print_line = "{} T: {:.3f} V: ".format(step, np.mean(losses[-1000:])) + player_print
@@ -524,15 +419,10 @@ try:
                 else:
                     print(print_line)
 
-    #        for i in range(100000):
-    #            loss, _ = sess.run([loss_node, optimizer_node], feed_dict=feed_dict)
-    #            print(loss)
-
-            #val = queue.get()
-            #print(val)
-
-    # Probably want to mean by ship number and weight other factors, like time
-    # step in game to balance the training.
+            # Overfit model to test architecture
+#            for i in range(100000):
+#                loss, _ = sess.run([loss_node, optimizer_node], feed_dict=feed_dict)
+#                print(loss)
 
 except KeyboardInterrupt:
     print('Cleaning up')

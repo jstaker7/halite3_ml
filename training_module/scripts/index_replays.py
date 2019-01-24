@@ -1,10 +1,9 @@
-broken
 try:
     import os
     import gzip
     import pickle
     import random
-    from core.data_utils import Game
+    from training_module.data_utils import Game
 
     path = '/Users/Peace/Desktop/replays'
 
